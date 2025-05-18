@@ -1,0 +1,26 @@
+# Dockerfile.server
+FROM ubuntu:22.04
+
+# Instala compilador e ferramentas
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      build-essential \
+      gcc \
+      make \
+      && rm -rf /var/lib/apt/lists/*
+
+# Cria diretório de trabalho
+WORKDIR /app
+
+# Copia todo o código fonte
+COPY . .
+
+# Compila
+RUN make clean && make
+
+# Exponha a porta do servidor
+EXPOSE 12345
+
+# Comando para iniciar o servidor
+CMD ["./bin/server"]
+

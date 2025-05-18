@@ -1,0 +1,20 @@
+# se ainda não tiver feito:
+docker build -f Dockerfile.server -t dropbox-server .
+
+# roda em background, mapeando a porta 12345
+docker run -d --name dropbox-server \
+  -p 12345:12345 \
+  -v "$(pwd)/storage:/app/storage" \
+  dropbox-server
+
+# primeiro construa a imagem cliente, se ainda não fez:
+docker build -f Dockerfile.client -t dropbox-client .
+
+# execute em modo interativo e monte seu sync_dir local
+docker run -it --rm --name dropbox-client1 \
+  -v "$(pwd)/client1_data:/app/sync_dir" \
+  --link dropbox-server:server \
+  -e CLIENT_USER=joao \
+  -e SERVER_HOST=server \
+  dropbox-client
+

@@ -1,0 +1,32 @@
+# Dockerfile.client
+FROM ubuntu:22.04
+
+# Instala compilador, make e dependências do inotify
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      build-essential \
+      gcc \
+      make \
+      inotify-tools \
+      && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copia o código fonte
+COPY . .
+
+# Compila
+RUN make clean && make
+
+# Cria o diretório de sincronização dentro do container
+RUN mkdir -p sync_dir
+
+# Variáveis de ambiente padrões (podem ser substituídas no 'docker run')
+ENV CLIENT_USER=user
+ENV SERVER_HOST=server
+ENV SERVER_PORT=12345
+
+# ENTRYPOINT para facilitar o override de usuário/host/porta
+ENTRYPOINT ["./bin/client"]
+CMD ["${CLIENT_USER}", "${SERVER_HOST}", "${SERVER_PORT}"]
+
