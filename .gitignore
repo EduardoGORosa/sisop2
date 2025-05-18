@@ -1,0 +1,24 @@
+# binários gerados
+bin/
+*.o
+common/*.o
+client/*.o
+server/*.o
+
+# diretórios de runtime / dados
+storage/
+sync_dir/
+downloads/
+test/            # se for saída de testes
+*.log            # logs do servidor/cliente
+
+# arquivos temporários de IDE / editor
+*.swp
+*~
+.vscode/
+
+# arquivos de core dump, coverage, etc.
+core
+*.gcda
+*.gcno
+
