@@ -18,7 +18,7 @@
 #define EVENT_SIZE (sizeof(struct inotify_event))
 #define EVENT_BUF_LEN (1024 * (EVENT_SIZE + 16))
 #endif
-#include "common/packet.h"
+#include "packet.h"
 
 #define CHUNK_SIZE MAX_PAYLOAD
 #define SOCKET_TIMEOUT 30 // 30 seconds timeout for socket operations

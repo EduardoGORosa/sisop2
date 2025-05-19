@@ -1,7 +1,7 @@
 #include <stdarg.h>
 // server/server.c
 
-#include "common/packet.h"
+#include "packet.h"
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <pthread.h>
