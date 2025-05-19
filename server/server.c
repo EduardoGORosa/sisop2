@@ -118,6 +118,7 @@ void *handle_client(void *arg) {
 
   // 2) COMMAND LOOP
   while (recv_packet(conn, &pkt) == 0) {
+    printf("entrou no while");
     // 2.2) CLI get_sync_dir
     if (pkt.type == PKT_GET_SYNC_DIR) {
       packet_t ack2 = {
@@ -223,6 +224,7 @@ void *handle_client(void *arg) {
     }
     default:
       // unknown—ignore
+      printf("default case");
       break;
     }
   }
