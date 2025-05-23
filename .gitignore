@@ -21,4 +21,4 @@ test/            # se for saída de testes
 core
 *.gcda
 *.gcno
-
+codigo guardado.txt

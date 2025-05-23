@@ -9,13 +9,45 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "../common/packet.h"
+#include <sys/inotify.h>
+#include <pthread.h>
 
 #define CHUNK_SIZE MAX_PAYLOAD
+#define EVENT_SIZE  ( sizeof (struct inotify_event) )
+#define BUF_LEN     ( 1024 * ( EVENT_SIZE + 16 ) )
 
 int send_and_wait_ack(int s, packet_t *p) {
     send_packet(s, p);
     packet_t a;
     return (recv_packet(s, &a) == 0 && a.type == PKT_ACK) ? 0 : -1;
+}
+
+void notify_file_change(void *parameter) {
+    char buffer[BUF_LEN];
+    int i = 0;
+    int length;
+    int fd = inotify_init();
+    if (fd < 0) {
+        perror("inotify_init");
+    }
+    int wd = inotify_add_watch(fd, "../sync_dir", IN_MODIFY | IN_CREATE | IN_DELETE);
+    while(1){
+        length = read(fd, buffer, BUF_LEN);
+
+        while (i < length) {
+            struct inotify_event *event = (struct inotify_event *) &buffer[i];
+            if (event->len) {
+                if (event->mask & IN_CREATE) {
+                    printf("The file %s was created.\n", event->name);
+                } else if (event->mask & IN_DELETE) {
+                    printf("The file %s was deleted.\n", event->name);
+                } else if (event->mask & IN_MODIFY) {
+                    printf("The file %s was modified.\n", event->name);
+                }
+            }
+            i += EVENT_SIZE + event->len;
+        }
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -52,6 +84,10 @@ int main(int argc, char *argv[]) {
            " list_server\n"
            " list_client\n"
            " exit\n");
+
+    pthread_t thing1;
+    int *parameter = malloc(sizeof(int));
+    pthread_create(&thing1, NULL, notify_file_change, (void *)parameter);
 
     char line[256];
     while (printf("> "), fgets(line, sizeof(line), stdin)) {
