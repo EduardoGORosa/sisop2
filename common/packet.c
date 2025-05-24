@@ -1,6 +1,7 @@
 #include "packet.h"
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 int send_packet(int sockfd, const packet_t *pkt) {
     packet_t netpkt = *pkt;
@@ -11,10 +12,31 @@ int send_packet(int sockfd, const packet_t *pkt) {
 }
 
 int recv_packet(int sockfd, packet_t *pkt) {
-    ssize_t recvd = read(sockfd, pkt, sizeof(*pkt));
-    if (recvd != sizeof(*pkt)) return -1;
+    char *buffer = (char *)pkt; // Ponteiro para o início da estrutura do pacote
+    size_t bytes_to_receive = sizeof(packet_t);
+    ssize_t bytes_received_total = 0;
+
+    while (bytes_received_total < bytes_to_receive) {
+        ssize_t bytes_received_now = read(sockfd, buffer + bytes_received_total, bytes_to_receive - bytes_received_total);
+
+        if (bytes_received_now == -1) {
+            if (errno == EINTR) { // Chamada interrompida por um sinal, tente novamente
+                continue;
+            }
+            perror("Erro na leitura do socket (read em recv_packet)");
+            return -1; // Erro de leitura
+        }
+
+        if (bytes_received_now == 0) {
+            // Conexão fechada pelo peer antes de todos os dados serem recebidos
+            fprintf(stderr, "recv_packet: Conexão fechada pelo servidor. Esperado %zu bytes, recebido %zd no total.\n", bytes_to_receive, bytes_received_total);
+            return -1; // Conexão fechada
+        }
+        bytes_received_total += bytes_received_now;
+    }
+
+    // Se chegou aqui, todos os bytes foram recebidos
     pkt->seq_num      = ntohl(pkt->seq_num);
     pkt->payload_size = ntohl(pkt->payload_size);
     return 0;
 }
-
