@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <errno.h>
-
+#include <stdio.h>
 int send_packet(int sockfd, const packet_t *pkt) {
     packet_t netpkt = *pkt;
     netpkt.seq_num      = htonl(pkt->seq_num);
