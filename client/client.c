@@ -29,13 +29,12 @@ char* upload(char *full_path_arg , int sock) {
           // Nenhuma '/' encontrada, o próprio argumento é o nome do arquivo (ex: "arquivo.txt")
           base_filename = full_path_arg;
       } else {
-          // A '/' foi encontrada, avança o ponteiro para depois da '/' para obter o nome do arquivo
           base_filename++;
       }
 
       // Verificar se o nome do arquivo base não é muito longo
       if (strlen(base_filename) + 1 > MAX_PAYLOAD) {
-          snprintf(msg, 256, "Erro: Nome do arquivo '%s' é muito longo.", base_filename);
+          snprintf(msg, 256, "Erro: Nome do arquivo '%s' é muito longo.\n", base_filename);
           return msg;
       }
       // Prepara o pacote de requisição de upload com o NOME BASE do arquivo
@@ -47,11 +46,10 @@ char* upload(char *full_path_arg , int sock) {
           // Abre o arquivo usando o CAMINHO COMPLETO fornecido pelo usuário
           FILE *fp = fopen(full_path_arg, "rb");
           if (fp == NULL) {
-              snprintf(msg, 512, "Erro ao tentar abrir o arquivo '%s' para upload.", full_path_arg);
+              snprintf(msg, 512, "Erro ao tentar abrir o arquivo '%s' para upload.\n", full_path_arg);
               return msg;
           }
 
-          // O restante da lógica de leitura do arquivo e envio dos pacotes de dados permanece o mesmo
           uint32_t seq = 2;
           char buf[CHUNK_SIZE];
           size_t n;
@@ -65,7 +63,7 @@ char* upload(char *full_path_arg , int sock) {
           }
           // Verifica se o loop terminou devido a um erro de leitura do arquivo
           if (ferror(fp)) {
-              msg = "Erro de leitura durante o upload do arquivo";
+              msg = "Erro de leitura durante o upload do arquivo\n";
               return msg;
           }
 
@@ -87,13 +85,12 @@ char* upload(char *full_path_arg , int sock) {
                                     // O servidor não envia ACK para o pacote de 0 bytes, ele sai do loop.
                                     // Portanto, o cliente não deve esperar ACK para o pacote final de 0 bytes.
 
-          fclose(fp);
-          snprintf(msg, 512, "Arquivo '%s' enviado com sucesso (como '%s' para o servidor).", full_path_arg, base_filename);
+          fclose(fp);          
       } else {
-          snprintf(msg, 256, "Erro: Servidor não confirmou o pedido de upload para '%s'.", base_filename);
+          snprintf(msg, 256, "Erro: Servidor não confirmou o pedido de upload para '%s'.\n", base_filename);
       }
   } else {
-      msg = "Uso: upload <caminho/completo/do/arquivo.ext>";
+      msg = "Uso: upload <caminho/completo/do/arquivo.ext>\n";
   }
   return msg;
 }
@@ -106,7 +103,7 @@ char* delete(char *file , int sock) {
       packet_t r; recv_packet(sock, &r);
   }
   else{
-      return "Erro: Nome do arquivo para exclusão não especificado.";
+      return "Erro: Nome do arquivo para exclusão não especificado.\n";
   }
 }
 
@@ -148,6 +145,58 @@ void notify_file_change(void *parameter) {
     }
 }
 
+void handle_download(int sock, const char *filename) {
+    char path[512];
+    snprintf(path, sizeof(path), "%s/%s", "../sync_dir", filename);
+    
+    FILE *f = fopen(path, "wb");
+    if (!f) {
+        printf("erro na abertura do arquivo.\n");
+        return;
+    }
+    
+    packet_t pkt;
+    while (recv_packet(sock, &pkt) == 0) {
+        packet_t ca = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
+        send_packet(sock, &ca);
+
+        if (pkt.payload_size == 0)
+            break;
+
+        fwrite(pkt.payload, 1, pkt.payload_size, f);
+    }
+      
+    fclose(f);
+    printf("Arquivo %s atualizado com sucesso. \n", filename);
+}
+
+void *listen_for_updates(void *arg) {
+    int sock = *(int *)arg;
+    char buffer[4096];
+    packet_t pkt;
+    
+    while (recv_packet(sock, &pkt) == 0) {                
+        if (pkt.type == PKT_SYNC_EVENT) {
+            continue;
+        }
+
+        size_t flen = pkt.payload_size < MAX_PAYLOAD ? pkt.payload_size : MAX_PAYLOAD;
+        char fn[MAX_PAYLOAD+1];
+        memcpy(fn, pkt.payload, flen);
+        fn[flen] = '\0';
+        
+        char path[512];
+        snprintf(path, sizeof(path), "%s/%s", "../sync_dir", fn);        
+        
+        if(pkt.type == PKT_UPLOAD_REQ){            
+            packet_t r = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };                
+            send_packet(sock, &r);
+            handle_download(sock, fn);
+        }        
+    }
+
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 4) {
         fprintf(stderr, "Uso: %s <user> <host> <port>\n", argv[0]);
@@ -174,6 +223,14 @@ int main(int argc, char *argv[]) {
     packet_t ack;
     recv_packet(sock, &ack);
 
+    pthread_t inotify;
+    int *parameter = malloc(sizeof(int));
+    *parameter = sock;
+    pthread_create(&inotify, NULL, notify_file_change, (void *)parameter);
+    
+    pthread_t listen_thread;
+    pthread_create(&listen_thread, NULL, listen_for_updates, &sock);
+    
     printf("Sessão iniciada para '%s'\n", user);
     printf("Comandos:\n"
            " upload <file>\n"
@@ -182,11 +239,6 @@ int main(int argc, char *argv[]) {
            " list_server\n"
            " list_client\n"
            " exit\n");
-
-    pthread_t thing1;
-    int *parameter = malloc(sizeof(int));
-    *parameter = sock;
-    pthread_create(&thing1, NULL, notify_file_change, (void *)parameter);
 
     char line[256];
     while (printf("> "), fgets(line, sizeof(line), stdin)) {

@@ -14,11 +14,12 @@
 #define BACKLOG       10
 #define CHUNK_SIZE    MAX_PAYLOAD
 #define MAX_USER_LEN  256
+#define MAX_CONNECTIONS 2   // Valor especificado no enunciado do trabalho
 
 typedef struct UserSess {
     char username[MAX_USER_LEN];
     int  count;
-    int  conn_fd;
+    int  conn_fd[MAX_CONNECTIONS];
     struct UserSess *next;
 } UserSess;
 
@@ -46,10 +47,18 @@ static UserSess *get_user_sess(const char *user) {
     UserSess *u = calloc(1, sizeof(*u));
     strncpy(u->username, user, MAX_USER_LEN - 1);
     u->count = 0;
-    u->conn_fd = -1;
+    for (int i = 0; i < MAX_CONNECTIONS; i++) {
+        u->conn_fd[i] = 0;
+    }
     u->next = sessions_head;
     sessions_head = u;
     return u;
+}
+
+int send_and_wait_ack(int s, packet_t *p) {
+    send_packet(s, p);
+    packet_t a;
+    return (recv_packet(s, &a) == 0 && a.type == PKT_ACK) ? 0 : -1;
 }
 
 void *handle_client(void *arg) {
@@ -57,13 +66,11 @@ void *handle_client(void *arg) {
     free(arg);
     packet_t pkt;
 
-    // 1) GET_SYNC_DIR
     if (recv_packet(conn, &pkt) < 0 || pkt.type != PKT_GET_SYNC_DIR) {
         close(conn);
         return NULL;
     }
 
-    // Copy user safely
     char user[MAX_USER_LEN];
     size_t ulen = pkt.payload_size < (MAX_USER_LEN - 1)
                    ? pkt.payload_size
@@ -71,7 +78,6 @@ void *handle_client(void *arg) {
     memcpy(user, pkt.payload, ulen);
     user[ulen] = '\0';
 
-    // 2) Session control
     pthread_mutex_lock(&sessions_mutex);
     UserSess *us = get_user_sess(user);
     if (us->count >= 2) {
@@ -82,28 +88,29 @@ void *handle_client(void *arg) {
         return NULL;
     }
     us->count++;
-    us->conn_fd = conn;
+    for (int i = 0; i < MAX_CONNECTIONS; i++) {
+        if (us->conn_fd[i] == 0) {
+            us->conn_fd[i] = conn;
+            break;
+        }
+    }
     pthread_mutex_unlock(&sessions_mutex);
 
-    // 3) Initial ACK
     packet_t ack = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
     send_packet(conn, &ack);
     printf("[+] Sessão iniciada para '%s' (fd=%d) total=%d\n",
            user, conn, us->count);
 
-    // 4) Prepare directory
     char base[512];
     snprintf(base, sizeof(base), "storage/%s/sync_dir", user);
     mkdir_p("storage", 0755);
     mkdir_p(base, 0755);
 
-    // 5) Command loop
-    while (recv_packet(conn, &pkt) == 0) {
+    while (recv_packet(conn, &pkt) == 0) {        
         if (pkt.type == PKT_SYNC_EVENT) {
             continue;
         }
 
-        // Extract filename safely
         size_t flen = pkt.payload_size < CHUNK_SIZE ? pkt.payload_size : CHUNK_SIZE;
         char fn[CHUNK_SIZE+1];
         memcpy(fn, pkt.payload, flen);
@@ -116,13 +123,54 @@ void *handle_client(void *arg) {
             case PKT_UPLOAD_REQ: {
                 printf("[*] Upload: %s\n", fn);
                 FILE *f = fopen(path, "wb");
-                packet_t r = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
+                packet_t r = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };                
                 send_packet(conn, &r);
+
                 while (recv_packet(conn, &pkt) == 0 && pkt.payload_size > 0) {
                     fwrite(pkt.payload, 1, pkt.payload_size, f);
                     packet_t ca = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
                     send_packet(conn, &ca);
                 }
+                
+                pthread_mutex_lock(&sessions_mutex);
+                for (int i = 0; i < MAX_CONNECTIONS; i++) {
+                    int other_fd = us->conn_fd[i];
+                    if (other_fd > 0) {
+                        rewind(f); 
+                        packet_t req = { .type = PKT_UPLOAD_REQ, .seq_num = 1, .payload_size = (uint32_t)strlen(fn) + 1 };
+                        memcpy(req.payload, fn, req.payload_size);
+      
+                        // Envia a requisição e espera pelo ACK
+                        if (send_and_wait_ack(other_fd, &req) == 0) {                            
+                            if (f == NULL) {
+                                printf("Erro ao tentar abrir o arquivo '%s' para upload.\n", path);                              
+                            }
+                            
+                            uint32_t seq = 2;
+                            char buf[CHUNK_SIZE];
+                            size_t n;
+                            while ((n = fread(buf, 1, CHUNK_SIZE, f)) > 0) {
+                                packet_t dp = { .type = PKT_UPLOAD_DATA, .seq_num = seq++, .payload_size = (uint32_t)n };
+                                memcpy(dp.payload, buf, n);
+                                if (send_and_wait_ack(other_fd, &dp) != 0) {
+                                    printf("Erro: Falha ao enviar chunk do arquivo ou receber ACK.\n");
+                                }
+                            }
+                            // Verifica se o loop terminou devido a um erro de leitura do arquivo
+                            if (ferror(f)) {
+                                printf("Erro de leitura durante o upload do arquivo\n");
+                            }
+
+                            // Envia o pacote final indicando o fim do upload
+                            packet_t endp = { .type = PKT_UPLOAD_DATA, .seq_num = seq, .payload_size = 0 };
+                            send_packet(other_fd, &endp);
+                            
+                            printf("Arquivo '%s' atualizado com sucesso.\n", fn);                            
+                        }                                                  
+                        
+                    } 
+                }
+                pthread_mutex_unlock(&sessions_mutex);
                 fclose(f);
                 break;
             }
@@ -190,11 +238,15 @@ void *handle_client(void *arg) {
     // End session
     pthread_mutex_lock(&sessions_mutex);
     us->count--;
-    if (us->conn_fd == conn) us->conn_fd = -1;
+    for (int i = 0; i < MAX_CONNECTIONS; i++) {
+        if (us->conn_fd[i] == conn) {
+            us->conn_fd[i] = 0;
+            break;
+        }
+    }
     pthread_mutex_unlock(&sessions_mutex);
     close(conn);
-    printf("[-] Sessão encerrada para '%s' (fd=%d) total=%d\n",
-           user, conn, us->count);
+    printf("[-] Sessão encerrada para '%s' (fd=%d) total=%d\n", user, conn, us->count);
     return NULL;
 }
 
