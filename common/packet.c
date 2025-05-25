@@ -3,17 +3,19 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h> // For memcpy if not included elsewhere
+
 int send_packet(int sockfd, const packet_t *pkt) {
     packet_t netpkt = *pkt;
     netpkt.seq_num      = htonl(pkt->seq_num);
     netpkt.payload_size = htonl(pkt->payload_size);
-    ssize_t sent = write(sockfd, &netpkt, sizeof(netpkt));
-    return (sent == sizeof(netpkt)) ? 0 : -1;
+    ssize_t sent = write(sockfd, &netpkt, sizeof(packet_t)); // Ensure to send entire packet_t size
+    return (sent == sizeof(packet_t)) ? 0 : -1;
 }
 
 int recv_packet(int sockfd, packet_t *pkt) {
     char *buffer = (char *)pkt; // Ponteiro para o início da estrutura do pacote
-    size_t bytes_to_receive = sizeof(packet_t);
+    size_t bytes_to_receive = sizeof(packet_t); // Ensure to receive entire packet_t size
     ssize_t bytes_received_total = 0;
 
     while (bytes_received_total < bytes_to_receive) {
@@ -23,13 +25,13 @@ int recv_packet(int sockfd, packet_t *pkt) {
             if (errno == EINTR) { // Chamada interrompida por um sinal, tente novamente
                 continue;
             }
-            perror("Erro na leitura do socket (read em recv_packet)");
+            // perror("Erro na leitura do socket (read em recv_packet)"); // Potentially too noisy
             return -1; // Erro de leitura
         }
 
         if (bytes_received_now == 0) {
             // Conexão fechada pelo peer antes de todos os dados serem recebidos
-            fprintf(stderr, "recv_packet: Conexão fechada pelo servidor. Esperado %zu bytes, recebido %zd no total.\n", bytes_to_receive, bytes_received_total);
+            // fprintf(stderr, "recv_packet: Conexão fechada. Esperado %zu bytes, recebido %zd no total.\n", bytes_to_receive, bytes_received_total);
             return -1; // Conexão fechada
         }
         bytes_received_total += bytes_received_now;

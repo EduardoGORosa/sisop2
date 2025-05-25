@@ -3,278 +3,198 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <pthread.h>
+#include <unistd.h>     // For close
+#include <arpa/inet.h>  // For sockaddr_in, inet_ntoa
+#include <sys/socket.h> // For socket, bind, listen, accept
+#include <pthread.h>    // For pthread_create, pthread_detach
+#include <limits.h>
 #include "../common/packet.h"
+#include "server_utils.h"
+#include "server_session.h"
+#include "server_request_handler.h"
 
-#define SERVER_PORT   12345
-#define BACKLOG       10
-#define CHUNK_SIZE    MAX_PAYLOAD
-#define MAX_USER_LEN  256
-#define MAX_CONNECTIONS 2   // Valor especificado no enunciado do trabalho
+#define SERVER_DEFAULT_PORT 12345
+#define SERVER_BACKLOG      10
+#define STORAGE_BASE_DIR "storage"
 
-typedef struct UserSess {
+typedef struct {
+    int client_conn_fd;
+    // struct sockaddr_in client_addr; // If needed for logging client IP
+} client_handler_args_t;
+
+
+void *client_handler_thread(void *arg) {
+    client_handler_args_t *handler_args = (client_handler_args_t*)arg;
+    int conn_fd = handler_args->client_conn_fd;
+    // char client_ip_str[INET_ADDRSTRLEN];
+    // inet_ntop(AF_INET, &handler_args->client_addr.sin_addr, client_ip_str, INET_ADDRSTRLEN);
+    free(handler_args); // Free the arguments structure
+
+    packet_t initial_pkt;
+    if (recv_packet(conn_fd, &initial_pkt) < 0 || initial_pkt.type != PKT_GET_SYNC_DIR) {
+        fprintf(stderr, "Falha ao receber pacote inicial ou tipo incorreto de fd=%d.\n", conn_fd);
+        close(conn_fd);
+        return NULL;
+    }
+
     char username[MAX_USER_LEN];
-    int  count;
-    int  conn_fd[MAX_CONNECTIONS];
-    struct UserSess *next;
-} UserSess;
-
-static UserSess *sessions_head = NULL;
-static pthread_mutex_t sessions_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-// mkdir -p equivalent
-static void mkdir_p(const char *path, mode_t mode) {
-    char tmp[512];
-    snprintf(tmp, sizeof(tmp), "%s", path);
-    for (char *p = tmp + 1; *p; p++) {
-        if (*p == '/') {
-            *p = '\0';
-            mkdir(tmp, mode);
-            *p = '/';
-        }
+    size_t ulen = initial_pkt.payload_size < (MAX_USER_LEN -1) ? initial_pkt.payload_size : (MAX_USER_LEN -1);
+    memcpy(username, initial_pkt.payload, ulen);
+    username[ulen > 0 ? ulen -1: 0] = '\0'; // Ensure null termination (if payload_size includes it)
+    if (initial_pkt.payload_size > 0 && initial_pkt.payload_size <= MAX_USER_LEN) { // If not null terminated
+         username[initial_pkt.payload_size] = '\0';
+    } else if (initial_pkt.payload_size == 0){
+         username[0] = '\0'; // Empty username
     }
-    mkdir(tmp, mode);
-}
 
-static UserSess *get_user_sess(const char *user) {
-    for (UserSess *u = sessions_head; u; u = u->next) {
-        if (strcmp(u->username, user) == 0) return u;
-    }
-    UserSess *u = calloc(1, sizeof(*u));
-    strncpy(u->username, user, MAX_USER_LEN - 1);
-    u->count = 0;
-    for (int i = 0; i < MAX_CONNECTIONS; i++) {
-        u->conn_fd[i] = 0;
-    }
-    u->next = sessions_head;
-    sessions_head = u;
-    return u;
-}
 
-int send_and_wait_ack(int s, packet_t *p) {
-    send_packet(s, p);
-    packet_t a;
-    return (recv_packet(s, &a) == 0 && a.type == PKT_ACK) ? 0 : -1;
-}
-
-void *handle_client(void *arg) {
-    int conn = *(int*)arg;
-    free(arg);
-    packet_t pkt;
-
-    if (recv_packet(conn, &pkt) < 0 || pkt.type != PKT_GET_SYNC_DIR) {
-        close(conn);
+    if (strlen(username) == 0) {
+        fprintf(stderr, "Nome de usuário vazio recebido de fd=%d. Rejeitando.\n", conn_fd);
+        packet_t nack_resp = { .type = PKT_NACK, .seq_num = initial_pkt.seq_num };
+        snprintf(nack_resp.payload, MAX_PAYLOAD, "Nome de usuário não pode ser vazio.");
+        nack_resp.payload_size = strlen(nack_resp.payload) +1;
+        send_packet(conn_fd, &nack_resp);
+        close(conn_fd);
         return NULL;
     }
 
-    char user[MAX_USER_LEN];
-    size_t ulen = pkt.payload_size < (MAX_USER_LEN - 1)
-                   ? pkt.payload_size
-                   : (MAX_USER_LEN - 1);
-    memcpy(user, pkt.payload, ulen);
-    user[ulen] = '\0';
 
-    pthread_mutex_lock(&sessions_mutex);
-    UserSess *us = get_user_sess(user);
-    if (us->count >= 2) {
-        pthread_mutex_unlock(&sessions_mutex);
-        packet_t nack = { .type = PKT_NACK, .seq_num = pkt.seq_num, .payload_size = 0 };
-        send_packet(conn, &nack);
-        close(conn);
+    lock_sessions();
+    UserSession_t *user_session = get_or_create_user_session_locked(username);
+    if (!user_session) { // Should not happen if calloc worked
+        unlock_sessions();
+        fprintf(stderr, "Falha crítica ao obter/criar sessão para '%s'.\n", username);
+        packet_t nack_resp = { .type = PKT_NACK, .seq_num = initial_pkt.seq_num };
+         snprintf(nack_resp.payload, MAX_PAYLOAD, "Erro interno do servidor (sessão).");
+        nack_resp.payload_size = strlen(nack_resp.payload) +1;
+        send_packet(conn_fd, &nack_resp);
+        close(conn_fd);
         return NULL;
     }
-    us->count++;
-    for (int i = 0; i < MAX_CONNECTIONS; i++) {
-        if (us->conn_fd[i] == 0) {
-            us->conn_fd[i] = conn;
-            break;
-        }
+
+    if (add_connection_to_session_locked(user_session, conn_fd) != 0) {
+        unlock_sessions();
+        fprintf(stderr, "Usuário '%s' (fd=%d) excedeu o limite de conexões (%d).\n", username, conn_fd, MAX_SESSIONS_PER_USER);
+        packet_t nack_resp = { .type = PKT_NACK, .seq_num = initial_pkt.seq_num };
+        snprintf(nack_resp.payload, MAX_PAYLOAD, "Limite de conexões atingido.");
+        nack_resp.payload_size = strlen(nack_resp.payload) +1;
+        send_packet(conn_fd, &nack_resp);
+        close(conn_fd);
+        return NULL;
     }
-    pthread_mutex_unlock(&sessions_mutex);
+    unlock_sessions();
 
-    packet_t ack = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
-    send_packet(conn, &ack);
-    printf("[+] Sessão iniciada para '%s' (fd=%d) total=%d\n",
-           user, conn, us->count);
+    packet_t ack_resp = { .type = PKT_ACK, .seq_num = initial_pkt.seq_num, .payload_size = 0 };
+    send_packet(conn_fd, &ack_resp);
+    
+    lock_sessions();
+    printf("[+] Sessão iniciada para '%s' (fd=%d), total de conexões ativas para este usuário: %d\n",
+           username, conn_fd, user_session->active_connections_count);
+    unlock_sessions();
 
-    char base[512];
-    snprintf(base, sizeof(base), "storage/%s/sync_dir", user);
-    mkdir_p("storage", 0755);
-    mkdir_p(base, 0755);
 
-    while (recv_packet(conn, &pkt) == 0) {        
-        if (pkt.type == PKT_SYNC_EVENT) {
-            continue;
-        }
+    char user_storage_base_dir[PATH_MAX];
+    snprintf(user_storage_base_dir, sizeof(user_storage_base_dir), "%s/%s/sync_dir", STORAGE_BASE_DIR, username);
+    mkdir_p(STORAGE_BASE_DIR, 0755); // Ensure base storage directory exists
+    char user_base_for_mkdir[PATH_MAX]; // Path for user's own base before sync_dir
+    snprintf(user_base_for_mkdir, sizeof(user_base_for_mkdir), "%s/%s", STORAGE_BASE_DIR, username);
+    mkdir_p(user_base_for_mkdir, 0755); // Ensure user's directory exists
+    mkdir_p(user_storage_base_dir, 0755); // Ensure sync_dir for user exists
 
-        size_t flen = pkt.payload_size < CHUNK_SIZE ? pkt.payload_size : CHUNK_SIZE;
-        char fn[CHUNK_SIZE+1];
-        memcpy(fn, pkt.payload, flen);
-        fn[flen] = '\0';
 
-        char path[512];
-        snprintf(path, sizeof(path), "%s/%s", base, fn);
-
-        switch (pkt.type) {
-            case PKT_UPLOAD_REQ: {
-                printf("[*] Upload: %s\n", fn);
-                FILE *f = fopen(path, "wb");
-                packet_t r = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };                
-                send_packet(conn, &r);
-
-                while (recv_packet(conn, &pkt) == 0 && pkt.payload_size > 0) {
-                    fwrite(pkt.payload, 1, pkt.payload_size, f);
-                    packet_t ca = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
-                    send_packet(conn, &ca);
-                }
-                
-                pthread_mutex_lock(&sessions_mutex);
-                for (int i = 0; i < MAX_CONNECTIONS; i++) {
-                    int other_fd = us->conn_fd[i];
-                    if (other_fd > 0) {
-                        rewind(f); 
-                        packet_t req = { .type = PKT_UPLOAD_REQ, .seq_num = 1, .payload_size = (uint32_t)strlen(fn) + 1 };
-                        memcpy(req.payload, fn, req.payload_size);
-      
-                        // Envia a requisição e espera pelo ACK
-                        if (send_and_wait_ack(other_fd, &req) == 0) {                            
-                            if (f == NULL) {
-                                printf("Erro ao tentar abrir o arquivo '%s' para upload.\n", path);                              
-                            }
-                            
-                            uint32_t seq = 2;
-                            char buf[CHUNK_SIZE];
-                            size_t n;
-                            while ((n = fread(buf, 1, CHUNK_SIZE, f)) > 0) {
-                                packet_t dp = { .type = PKT_UPLOAD_DATA, .seq_num = seq++, .payload_size = (uint32_t)n };
-                                memcpy(dp.payload, buf, n);
-                                if (send_and_wait_ack(other_fd, &dp) != 0) {
-                                    printf("Erro: Falha ao enviar chunk do arquivo ou receber ACK.\n");
-                                }
-                            }
-                            // Verifica se o loop terminou devido a um erro de leitura do arquivo
-                            if (ferror(f)) {
-                                printf("Erro de leitura durante o upload do arquivo\n");
-                            }
-
-                            // Envia o pacote final indicando o fim do upload
-                            packet_t endp = { .type = PKT_UPLOAD_DATA, .seq_num = seq, .payload_size = 0 };
-                            send_packet(other_fd, &endp);
-                            
-                            printf("Arquivo '%s' atualizado com sucesso.\n", fn);                            
-                        }                                                  
-                        
-                    } 
-                }
-                pthread_mutex_unlock(&sessions_mutex);
-                fclose(f);
-                break;
-            }
-            case PKT_DOWNLOAD_REQ: {
-                printf("[*] Download: %s\n", fn);
-                FILE *f = fopen(path, "rb");
-                packet_t r = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
-                send_packet(conn, &r);
-                uint32_t seq = 1;
-                while (!feof(f)) {
-                    size_t n = fread(pkt.payload, 1, CHUNK_SIZE, f);
-                    pkt.type = PKT_DOWNLOAD_DATA;
-                    pkt.seq_num = seq++;
-                    pkt.payload_size = (uint32_t)n;
-                    send_packet(conn, &pkt);
-                    recv_packet(conn, &r);
-                }
-                pkt.payload_size = 0;
-                send_packet(conn, &pkt);
-                fclose(f);
-                break;
-            }
-            case PKT_DELETE_REQ: {
-                printf("[*] Delete: %s\n", fn);
-                remove(path);
-                packet_t r2 = { .type = PKT_ACK, .seq_num = pkt.seq_num, .payload_size = 0 };
-                send_packet(conn, &r2);
-                break;
-            }
-            case PKT_LIST_SERVER_REQ: {
-                DIR *d = opendir(base);
-                struct dirent *e;
-                struct stat st;
-                char buf[CHUNK_SIZE];
-                size_t off = 0;
-                while ((e = readdir(d))) {
-                    if (!strcmp(e->d_name,".") || !strcmp(e->d_name,"..")) continue;
-                    char fp2[512];
-                    snprintf(fp2, sizeof(fp2), "%s/%s", base, e->d_name);
-                    if (stat(fp2, &st) < 0) continue;
-                    off += snprintf(buf+off, CHUNK_SIZE-off,
-                        "%s\t%ld bytes\tmtime:%ld\tatime:%ld\tctime:%ld\n",
-                        e->d_name,
-                        (long)st.st_size,
-                        (long)st.st_mtime,
-                        (long)st.st_atime,
-                        (long)st.st_ctime);
-                    if (off >= CHUNK_SIZE) break;
-                }
-                closedir(d);
-                packet_t res = {
-                    .type = PKT_LIST_SERVER_RES,
-                    .seq_num = pkt.seq_num,
-                    .payload_size = (uint32_t)off
-                };
-                memcpy(res.payload, buf, off);
-                send_packet(conn, &res);
-                break;
-            }
-            default:
-                break;
-        }
+    packet_t received_pkt;
+    while (recv_packet(conn_fd, &received_pkt) == 0) {
+        handle_received_packet(conn_fd, &received_pkt, user_session, user_storage_base_dir);
     }
 
-    // End session
-    pthread_mutex_lock(&sessions_mutex);
-    us->count--;
-    for (int i = 0; i < MAX_CONNECTIONS; i++) {
-        if (us->conn_fd[i] == conn) {
-            us->conn_fd[i] = 0;
-            break;
-        }
-    }
-    pthread_mutex_unlock(&sessions_mutex);
-    close(conn);
-    printf("[-] Sessão encerrada para '%s' (fd=%d) total=%d\n", user, conn, us->count);
+    // Client disconnected or error in recv_packet
+    printf("[-] Conexão com fd=%d (usuário '%s') encerrada ou perdida.\n", conn_fd, username);
+    lock_sessions();
+    remove_connection_from_session_locked(user_session, conn_fd);
+    printf("[-] Sessão para '%s' (fd=%d) finalizada. Conexões restantes para este usuário: %d\n",
+           username, conn_fd, user_session->active_connections_count);
+    unlock_sessions();
+    close(conn_fd);
     return NULL;
 }
 
-int main(void) {
-    mkdir_p("storage", 0755);
+
+int main(int argc, char *argv[]) {
+    int port = SERVER_DEFAULT_PORT;
+    if (argc > 1) {
+        port = atoi(argv[1]);
+        if (port <= 0 || port > 65535) {
+            fprintf(stderr, "Porta inválida: %s. Usando porta padrão %d.\n", argv[1], SERVER_DEFAULT_PORT);
+            port = SERVER_DEFAULT_PORT;
+        }
+    }
+
+    init_session_management(); // Initialize mutex for sessions
+    mkdir_p(STORAGE_BASE_DIR, 0755); // Create base storage directory at startup
 
     int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (listen_fd < 0) { perror("socket"); exit(1); }
+    if (listen_fd < 0) { perror("socket creation failed"); exit(EXIT_FAILURE); }
 
-    struct sockaddr_in addr = {
+    // Allow address reuse
+    int optval = 1;
+    if (setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        perror("setsockopt SO_REUSEADDR failed");
+        // Non-fatal, but good for development
+    }
+
+
+    struct sockaddr_in serv_addr = {
         .sin_family = AF_INET,
-        .sin_addr.s_addr = INADDR_ANY,
-        .sin_port = htons(SERVER_PORT)
+        .sin_addr.s_addr = INADDR_ANY, // Listen on all available interfaces
+        .sin_port = htons(port)
     };
-    if (bind(listen_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) { perror("bind"); exit(1); }
-    if (listen(listen_fd, BACKLOG) < 0) { perror("listen"); exit(1); }
-    printf("Server listening on port %d\n", SERVER_PORT);
+
+    if (bind(listen_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+        perror("bind failed");
+        close(listen_fd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (listen(listen_fd, SERVER_BACKLOG) < 0) {
+        perror("listen failed");
+        close(listen_fd);
+        exit(EXIT_FAILURE);
+    }
+    printf("Servidor escutando na porta %d...\n", port);
 
     while (1) {
-        struct sockaddr_in cli;
-        socklen_t len = sizeof(cli);
-        int *pfd = malloc(sizeof(int));
-        *pfd = accept(listen_fd, (struct sockaddr*)&cli, &len);
-        if (*pfd < 0) { perror("accept"); free(pfd); continue; }
+        struct sockaddr_in client_addr;
+        socklen_t client_len = sizeof(client_addr);
+        int conn_fd = accept(listen_fd, (struct sockaddr*)&client_addr, &client_len);
+
+        if (conn_fd < 0) {
+            perror("accept failed");
+            continue; // Continue to accept other connections
+        }
+        
+        char client_ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &client_addr.sin_addr, client_ip_str, INET_ADDRSTRLEN);
+        printf("Nova conexão de %s:%d (fd=%d)\n", client_ip_str, ntohs(client_addr.sin_port), conn_fd);
+
+        client_handler_args_t *thread_args = (client_handler_args_t*) malloc(sizeof(client_handler_args_t));
+        if (!thread_args) {
+            perror("malloc for thread_args failed");
+            close(conn_fd);
+            continue;
+        }
+        thread_args->client_conn_fd = conn_fd;
+        // thread_args->client_addr = client_addr; // If needed by thread
+
         pthread_t tid;
-        pthread_create(&tid, NULL, handle_client, pfd);
-        pthread_detach(tid);
+        if (pthread_create(&tid, NULL, client_handler_thread, thread_args) != 0) {
+            perror("pthread_create failed");
+            free(thread_args);
+            close(conn_fd);
+        } else {
+            pthread_detach(tid); // Detach thread as we are not joining it
+        }
     }
+
+    close(listen_fd); // Never reached in this loop
     return 0;
 }
-

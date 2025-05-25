@@ -1,37 +1,46 @@
-# Makefile para dropbox_clone
+CC = gcc
+CFLAGS = -Wall -Wextra -pthread -g
+LDFLAGS = -pthread
 
-CC      = gcc
-CFLAGS  = -Wall -Wextra -pthread -Icommon
+COMMON_OBJS = common/packet.o
 
-COMMON_SRC = common/packet.c
-COMMON_OBJ = $(COMMON_SRC:.c=.o)
+CLIENT_SRCS = client/client.c client/client_actions.c client/client_sync.c
+# CLIENT_OBJS lists all object files needed for the client executable
+CLIENT_OBJS = $(CLIENT_SRCS:.c=.o) $(COMMON_OBJS)
+CLIENT_EXEC = myClient
 
-CLIENT_SRC = client/client.c $(COMMON_SRC)
-CLIENT_OBJ = $(CLIENT_SRC:.c=.o)
+SERVER_SRCS = server/server.c server/server_session.c server/server_request_handler.c server/server_utils.c
+# SERVER_OBJS lists all object files needed for the server executable
+SERVER_OBJS = $(SERVER_SRCS:.c=.o) $(COMMON_OBJS)
+SERVER_EXEC = myServer
 
-SERVER_SRC = server/server.c $(COMMON_SRC)
-SERVER_OBJ = $(SERVER_SRC:.c=.o)
+# Default target: build both client and server
+all: $(CLIENT_EXEC) $(SERVER_EXEC)
 
-BIN_DIR = bin
-CLIENT_BIN = $(BIN_DIR)/client
-SERVER_BIN = $(BIN_DIR)/server
+# Rule to link the client executable
+$(CLIENT_EXEC): $(CLIENT_OBJS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-.PHONY: all clean
+# Rule to link the server executable
+$(SERVER_EXEC): $(SERVER_OBJS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-all: $(BIN_DIR) $(CLIENT_BIN) $(SERVER_BIN)
+# Generic rule to compile .c files into .o files (will be overridden by more specific rules below)
+# %.o: %.c
+#	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
-
-$(CLIENT_BIN): $(CLIENT_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $(CLIENT_OBJ)
-
-$(SERVER_BIN): $(SERVER_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $(SERVER_OBJ)
-
-%.o: %.c
+# Specific rules for compiling .c files from subdirectories into .o files in those same subdirectories
+common/%.o: common/%.c ../common/packet.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-clean:
-	rm -rf $(BIN_DIR) *.o common/*.o client/*.o server/*.o
+client/%.o: client/%.c ../common/packet.h client/client_actions.h client/client_sync.h
+	$(CC) $(CFLAGS) -c $< -o $@
 
+server/%.o: server/%.c ../common/packet.h server/server_session.h server/server_request_handler.h server/server_utils.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean rule to remove compiled files
+clean:
+	rm -f $(CLIENT_EXEC) $(SERVER_EXEC) \
+	      client/*.o server/*.o common/*.o \
+	      core.* *~
