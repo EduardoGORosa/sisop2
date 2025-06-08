@@ -60,7 +60,6 @@ int remove_directory_recursively(const char *path) {
     } else if (errno == ENOENT) { 
         return 0; 
     } else { 
-        //fprintf(stderr, "Erro ao abrir diretório %s: %s\n", path, strerror(errno)); // Pode ser muito verboso
         return -1;
     }
 
@@ -79,15 +78,12 @@ int remove_directory_recursively(const char *path) {
 
 int send_and_wait_ack_client(int s, packet_t *p) {
     int result = -1;
-    printf("DEBUG_SWAC: Tentando lock para enviar tipo %d...\n", p->type); fflush(stdout);
     pthread_mutex_lock(&socket_mutex); 
-    printf("DEBUG_SWAC: Lock adquirido. Enviando tipo %d...\n", p->type); fflush(stdout);
-
+    printf("Entrou no lock 1\n");
     if (send_packet(s, p) != 0) {
         fprintf(stderr, "\n[send_and_wait_ack_client] Erro ao enviar pacote tipo %d.\n", p->type);
         fflush(stderr);
     } else {
-        printf("DEBUG_SWAC: Pacote tipo %d enviado. Esperando ACK...\n", p->type); fflush(stdout);
         packet_t a;
         if (recv_packet(s, &a) != 0) {
             printf("DEBUG_SWAC: recv_packet falhou ou conexão fechada esperando ACK para tipo %d.\n", p->type); fflush(stdout);
@@ -103,26 +99,23 @@ int send_and_wait_ack_client(int s, packet_t *p) {
     }
 
     pthread_mutex_unlock(&socket_mutex); 
-    printf("DEBUG_SWAC: Mutex liberado. Retornando %d.\n", result); fflush(stdout);
+    printf("Saiu no lock 1\n");
     return result;
 }
 
 char* upload_file_action(const char *full_path_arg, int sock) {
-    //printf("\nDEBUG: upload_file_action iniciado para '%s'.\n", full_path_arg ? full_path_arg : "NULL"); fflush(stdout);
     char *msg = (char*) malloc(CLIENT_MSG_SIZE);
     if (!msg) { return strdup("Erro: Falha ao alocar memória para mensagem."); }
     msg[0] = '\0';
 
     if (!full_path_arg || strlen(full_path_arg) == 0) {
         snprintf(msg, CLIENT_MSG_SIZE, "Uso: upload <caminho/completo/do/arquivo.ext>\n");
-        //printf("DEBUG: upload_file_action saindo, full_path_arg inválido.\n"); fflush(stdout);
         return msg;
     }
 
     FILE *fp_check = fopen(full_path_arg, "rb");
     if (fp_check == NULL) {
         snprintf(msg, CLIENT_MSG_SIZE, "Erro ao tentar abrir o arquivo local '%s' para upload (verifique o caminho e permissões).\n", full_path_arg);
-        //printf("DEBUG: upload_file_action saindo, fopen falhou para '%s'. Error: %s\n", full_path_arg, strerror(errno)); fflush(stdout);
         return msg;
     }
     fclose(fp_check);
@@ -133,39 +126,31 @@ char* upload_file_action(const char *full_path_arg, int sock) {
 
     if (strlen(base_filename) == 0) { 
         snprintf(msg, CLIENT_MSG_SIZE, "Erro: Nome do arquivo base resultante é vazio.\n");
-        //printf("DEBUG: upload_file_action saindo, nome base vazio.\n"); fflush(stdout);
         return msg;
     }
     if (strlen(base_filename) + 1 > MAX_PAYLOAD) {
         snprintf(msg, CLIENT_MSG_SIZE, "Erro: Nome do arquivo '%s' é muito longo.\n", base_filename);
-        //printf("DEBUG: upload_file_action saindo, nome base muito longo.\n"); fflush(stdout);
         return msg;
     }
     
-    //printf("DEBUG: upload_file_action: base_filename='%s'. Enviando PKT_UPLOAD_REQ.\n", base_filename); fflush(stdout);
     packet_t rq = { .type = PKT_UPLOAD_REQ, .seq_num = 1 };
     strncpy(rq.payload, base_filename, MAX_PAYLOAD -1);
     rq.payload[MAX_PAYLOAD-1] = '\0';
     rq.payload_size = (uint32_t)strlen(rq.payload) + 1;
 
     if (send_and_wait_ack_client(sock, &rq) == 0) { 
-        //printf("DEBUG: upload_file_action: PKT_UPLOAD_REQ ACKed. Abrindo arquivo para enviar dados.\n"); fflush(stdout);
         FILE *fp = fopen(full_path_arg, "rb"); 
         if (fp == NULL) { 
             snprintf(msg, CLIENT_MSG_SIZE, "Erro crítico: Não foi possível reabrir o arquivo '%s' após ACK do servidor.\n", full_path_arg);
-            //printf("DEBUG: upload_file_action saindo, falha ao reabrir arquivo.\n"); fflush(stdout);
             return msg;
         }
 
         uint32_t seq = 2; char buf[CHUNK_SIZE]; size_t n_read; int error_occurred = 0;
-        //printf("DEBUG: upload_file_action: Iniciando envio de chunks.\n"); fflush(stdout);
         while ((n_read = fread(buf, 1, CHUNK_SIZE, fp)) > 0) {
             packet_t dp = { .type = PKT_UPLOAD_DATA, .seq_num = seq, .payload_size = (uint32_t)n_read };
             memcpy(dp.payload, buf, n_read);
-            //printf("DEBUG: upload_file_action: Enviando chunk %u, tamanho %zu.\n", seq, n_read); fflush(stdout);
             if (send_and_wait_ack_client(sock, &dp) != 0) { 
                 snprintf(msg, CLIENT_MSG_SIZE, "Erro: Falha ao enviar chunk %u do arquivo ou receber ACK.\n", seq-1);
-                //printf("DEBUG: upload_file_action: Erro no send_and_wait_ack para chunk %u.\n", seq-1); fflush(stdout);
                 error_occurred = 1; break;
             }
             seq++;
@@ -173,40 +158,35 @@ char* upload_file_action(const char *full_path_arg, int sock) {
         
         if (!error_occurred && ferror(fp)) { 
             snprintf(msg, CLIENT_MSG_SIZE, "Erro de leitura durante o upload do arquivo '%s'.\n", base_filename);
-            //printf("DEBUG: upload_file_action: Erro de ferror().\n"); fflush(stdout);
             error_occurred = 1;
         }
         fclose(fp);
 
         if (error_occurred) {
-            //printf("DEBUG: upload_file_action terminando com erro ocorrido durante envio de chunks.\n"); fflush(stdout);
             return msg;
         }
         
-        //printf("DEBUG: upload_file_action: Enviando pacote final de 0 bytes (seq %u).\n", seq); fflush(stdout);
         packet_t endp = { .type = PKT_UPLOAD_DATA, .seq_num = seq, .payload_size = 0 };
         pthread_mutex_lock(&socket_mutex);
+        printf("Entrou no lock 2\n");
         int send_final_ok = (send_packet(sock, &endp) == 0);
         pthread_mutex_unlock(&socket_mutex);
+        printf("Saiu no lock 2\n");
 
         if (!send_final_ok) {
              snprintf(msg, CLIENT_MSG_SIZE, "Erro: Falha ao enviar pacote final de upload para '%s'.\n", base_filename);
-             //printf("DEBUG: upload_file_action terminando com erro ao enviar pacote final.\n"); fflush(stdout);
              return msg;
         }
         
         free(msg);
-        //printf("DEBUG: upload_file_action terminando com sucesso.\n"); fflush(stdout);
         return (char*)UPLOAD_SUCCESS_MSG;
     } else {
         snprintf(msg, CLIENT_MSG_SIZE, "Erro: Servidor não confirmou o pedido de upload para '%s'.\n", base_filename);
-        //printf("DEBUG: upload_file_action: Servidor não ACK UPLOAD_REQ.\n"); fflush(stdout);
     }
     return msg;
 }
 
 char* delete_file_action(const char *filename, int sock) {
-    printf("DEBUG_DELETE: Iniciando delete_file_action para '%s'\n", filename ? filename : "NULL"); fflush(stdout);
     if (!filename || strlen(filename) == 0) return strdup("Erro: Nome do arquivo para exclusão não especificado.\n");
     
     packet_t rq = { .type = PKT_DELETE_REQ, .seq_num = 1 };
@@ -214,9 +194,7 @@ char* delete_file_action(const char *filename, int sock) {
     rq.payload[MAX_PAYLOAD-1] = '\0';
     rq.payload_size = (uint32_t)strlen(rq.payload) + 1;
 
-    printf("DEBUG_DELETE: Chamando send_and_wait_ack_client...\n"); fflush(stdout);
     if (send_and_wait_ack_client(sock, &rq) == 0) { 
-        printf("DEBUG_DELETE: send_and_wait_ack_client retornou sucesso.\n"); fflush(stdout);
         return strdup("Solicitação de deleção enviada e confirmada pelo servidor.");
     } else {
         printf("DEBUG_DELETE: send_and_wait_ack_client retornou erro.\n"); fflush(stdout);
@@ -237,78 +215,88 @@ void download_file_action(const char *filename, int sock, const char* initial_cw
 
     packet_t r_ack; int initial_req_ok = 0;
     pthread_mutex_lock(&socket_mutex);
+    printf("Entrou no lock 3\n");
     if (send_packet(sock, &rq) == 0) {
         if (recv_packet(sock, &r_ack) == 0 && r_ack.type == PKT_ACK) {
             initial_req_ok = 1;
         } else {
-             printf("Erro: Servidor não confirmou o pedido de download para '%s' ou falha na resposta (tipo %d).\n", filename, r_ack.type);
              if(r_ack.type == PKT_NACK) printf("Servidor respondeu com NACK (arquivo pode não existir ou erro no servidor).\n");
         }
     } else printf("Erro ao enviar requisição de download para '%s'.\n", filename);
     pthread_mutex_unlock(&socket_mutex);
+    printf("Saiu no lock 3\n");
     fflush(stdout); 
     if (!initial_req_ok) return;
 
-    char download_path[PATH_MAX];
+    char download_path[PATH_MAX];   // PATH_MAX já é definido pela biblioteca limits.h
     snprintf(download_path, PATH_MAX, "%s/%s", initial_cwd, filename);
     FILE *fp = fopen(download_path, "wb");
     if (!fp) { printf("Erro ao abrir o arquivo '%s' (em %s) para escrita.\n", filename, initial_cwd); fflush(stdout); return; }
-    printf("Baixando '%s' para '%s'...\n", filename, download_path); fflush(stdout);
 
     int download_successful = 0; packet_t dp; dp.payload_size = 1; 
     while (dp.payload_size != 0) { 
-        int error_in_loop = 0; pthread_mutex_lock(&socket_mutex);
-        if (recv_packet(sock, &dp) != 0) { error_in_loop = 1;
-        } else {
-            if (dp.type != PKT_DOWNLOAD_DATA) { error_in_loop = 1;
-            } else {
-                if (dp.payload_size == 0) download_successful = 1;
+        int error_in_loop = 0; 
+        pthread_mutex_lock(&socket_mutex);
+        printf("Entrou no lock 4\n");
+        if (recv_packet(sock, &dp) != 0) { 
+            error_in_loop = 1;
+        } 
+        else {
+            if (dp.type != PKT_DOWNLOAD_DATA) { 
+                error_in_loop = 1;
+            } 
+            else {
+                if (dp.payload_size == 0) {
+                    download_successful = 1;
+                }
                 else {
-                    if (fwrite(dp.payload, 1, dp.payload_size, fp) != dp.payload_size) error_in_loop = 1;
+                    if (fwrite(dp.payload, 1, dp.payload_size, fp) != dp.payload_size) {
+                        error_in_loop = 1;
+                    }
                     else {
                         packet_t ca = { .type = PKT_ACK, .seq_num = dp.seq_num, .payload_size = 0 };
-                        if (send_packet(sock, &ca) != 0) error_in_loop = 1;
+                        if (send_packet(sock, &ca) != 0) {
+                            error_in_loop = 1;
+                        }
                     }
                 }
             }
         }
         pthread_mutex_unlock(&socket_mutex);
+        printf("Saiu no lock 4\n");
         if (error_in_loop || dp.payload_size == 0) break; 
     } 
     fclose(fp);
     if(download_successful) printf("Download de '%s' concluído.\n", filename);
-    else { printf("Download de '%s' falhou ou foi incompleto.\n", filename); remove(download_path); }
+    else { remove(download_path); }
     fflush(stdout);
 }
 
 void list_server_files_action(int sock) {
-    //printf("\nDEBUG: Dentro de list_server_files_action(). Tentando mutex...\n"); fflush(stdout);
     packet_t rq = { .type = PKT_LIST_SERVER_REQ, .seq_num = 1, .payload_size = 0 };
     packet_t res; int success = 0;
 
     pthread_mutex_lock(&socket_mutex);
-    //printf("DEBUG: Mutex adquirido em list_server_files_action(). Enviando request...\n"); fflush(stdout);
+    printf("Entrou no lock 5\n");
     if (send_packet(sock, &rq) == 0) {
-        //printf("DEBUG: Request enviado. Esperando resposta...\n"); fflush(stdout);
         if (recv_packet(sock, &res) == 0 && res.type == PKT_LIST_SERVER_RES) {
-            //printf("DEBUG: Resposta recebida. Tipo: %d, Tamanho: %u\n", res.type, res.payload_size); fflush(stdout);
             success = 1;
         } else {
-            //if (res.type != PKT_LIST_SERVER_RES && res.type != 0) { 
-            //     printf("DEBUG: Erro ao receber resposta ou tipo inesperado (recebido tipo %d, esperado %d).\n", res.type, PKT_LIST_SERVER_RES); fflush(stdout);
-            //} else { 
-            //     printf("DEBUG: Falha no recv_packet ao esperar resposta para list_server.\n"); fflush(stdout);
-            //}
+            if (res.type != PKT_LIST_SERVER_RES && res.type != 0) { 
+                 printf("DEBUG: Erro ao receber resposta ou tipo inesperado (recebido tipo %d, esperado %d).\n", res.type, PKT_LIST_SERVER_RES); fflush(stdout);
+            } else { 
+                 printf("DEBUG: Falha no recv_packet ao esperar resposta para list_server.\n"); fflush(stdout);
+            }
         }
     } else {
-        //printf("DEBUG: Erro ao enviar request PKT_LIST_SERVER_REQ.\n"); fflush(stdout);
+        printf("DEBUG: Erro ao enviar request PKT_LIST_SERVER_REQ.\n"); fflush(stdout);
     }
     pthread_mutex_unlock(&socket_mutex);
-    //printf("DEBUG: Mutex liberado em list_server_files_action().\n"); fflush(stdout);
+    printf("Saiu no lock 5\n");
 
     if (success) {
         if (res.payload_size > 0) {
-            printf("Arquivos no servidor:\n"); fwrite(res.payload, 1, res.payload_size, stdout);
+            fwrite(res.payload, 1, res.payload_size, stdout);
         } else printf("Nenhum arquivo no diretório do servidor ou diretório vazio.\n");
     } else printf("Erro ao obter la lista de arquivos do servidor.\n");
     fflush(stdout);
@@ -317,7 +305,6 @@ void list_server_files_action(int sock) {
 void list_client_files_action(void) {
     DIR *d = opendir(".");
     if (!d) { perror("Erro ao abrir o diretório sync_dir local"); return; }
-    printf("Arquivos no diretório sync_dir local:\n");
     struct dirent *e; struct stat st;
     while ((e = readdir(d))) {
         if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
@@ -331,8 +318,6 @@ void list_client_files_action(void) {
 }
 
 int download_file_to_sync_dir(const char *filename, long expected_size_server, int sock) {
-    printf("Sincronizando arquivo do servidor: '%s'\n", filename); fflush(stdout);
-
     struct stat st;
     long local_size = -1;
     if (stat(filename, &st) == 0) { 
@@ -340,7 +325,6 @@ int download_file_to_sync_dir(const char *filename, long expected_size_server, i
     }
 
     if (local_size == expected_size_server && expected_size_server != 0) { // Don't skip 0-byte files if server has 0-byte and local doesn't exist
-        printf("Arquivo '%s' local já está sincronizado (tamanho: %ld bytes).\n", filename, local_size);
         fflush(stdout);
         return 0; 
     }
@@ -358,6 +342,7 @@ int download_file_to_sync_dir(const char *filename, long expected_size_server, i
 
     packet_t r_ack; int initial_req_ok = 0;
     pthread_mutex_lock(&socket_mutex);
+    printf("Entrou no lock 6\n");
     if (send_packet(sock, &rq) == 0) {
         if (recv_packet(sock, &r_ack) == 0 && r_ack.type == PKT_ACK) {
             initial_req_ok = 1;
@@ -371,6 +356,7 @@ int download_file_to_sync_dir(const char *filename, long expected_size_server, i
         fflush(stderr);
     }
     pthread_mutex_unlock(&socket_mutex);
+    printf("Saiu no lock 6\n");
 
     if (!initial_req_ok) return -1;
 
@@ -384,7 +370,9 @@ int download_file_to_sync_dir(const char *filename, long expected_size_server, i
     int download_successful = 0; packet_t dp; dp.payload_size = 1; 
     long bytes_downloaded = 0;
     while (dp.payload_size != 0) { 
-        int error_in_loop = 0; pthread_mutex_lock(&socket_mutex);
+        int error_in_loop = 0; 
+        pthread_mutex_lock(&socket_mutex);
+        printf("Entrou no lock 7\n");
         if (recv_packet(sock, &dp) != 0) { error_in_loop = 1;
         } else {
             if (dp.type != PKT_DOWNLOAD_DATA) { error_in_loop = 1;
@@ -401,12 +389,12 @@ int download_file_to_sync_dir(const char *filename, long expected_size_server, i
             }
         }
         pthread_mutex_unlock(&socket_mutex);
+        printf("Saiu no lock 7\n");
         if (error_in_loop || dp.payload_size == 0) break; 
     } 
     fclose(fp);
 
     if(download_successful && bytes_downloaded == expected_size_server) {
-         printf("Arquivo '%s' sincronizado com sucesso (%ld bytes).\n", filename, bytes_downloaded);
          fflush(stdout);
          return 0;
     } else {
@@ -418,12 +406,12 @@ int download_file_to_sync_dir(const char *filename, long expected_size_server, i
 }
 
 int perform_initial_sync(int sock) {
-    printf("Iniciando Sincronização Inicial...\n"); fflush(stdout);
     packet_t rq_list = { .type = PKT_LIST_SERVER_REQ, .seq_num = 1, .payload_size = 0 };
     packet_t res_list;
     int success_listing = 0;
 
     pthread_mutex_lock(&socket_mutex);
+    printf("Entrou no lock 8\n");
     if (send_packet(sock, &rq_list) == 0) {
         if (recv_packet(sock, &res_list) == 0 && res_list.type == PKT_LIST_SERVER_RES) {
             success_listing = 1;
@@ -436,6 +424,7 @@ int perform_initial_sync(int sock) {
         fflush(stderr);
     }
     pthread_mutex_unlock(&socket_mutex);
+    printf("Saiu no lock 8\n");
 
     if (!success_listing) {
         fprintf(stderr, "Não foi possível obter a lista de arquivos do servidor. Sincronização inicial abortada.\n");
@@ -487,7 +476,6 @@ int perform_initial_sync(int sock) {
     free(payload_copy);
 
     if (overall_sync_status == 0) {
-        printf("Sincronização inicial de arquivos concluída.\n");
     } else {
         printf("Sincronização inicial de arquivos concluída com uma ou mais falhas.\n");
     }

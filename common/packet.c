@@ -19,22 +19,25 @@ int recv_packet(int sockfd, packet_t *pkt) {
     ssize_t bytes_received_total = 0;
 
     while (bytes_received_total < bytes_to_receive) {
+        printf("Recebendo pacotes. Total: %i . Recebendo: %i \n", bytes_received_total , bytes_to_receive);
         ssize_t bytes_received_now = read(sockfd, buffer + bytes_received_total, bytes_to_receive - bytes_received_total);
 
         if (bytes_received_now == -1) {
             if (errno == EINTR) { // Chamada interrompida por um sinal, tente novamente
+                printf("Chamada interrompida\n");
                 continue;
             }
-            // perror("Erro na leitura do socket (read em recv_packet)"); // Potentially too noisy
+            printf("Erro na leitura\n");
             return -1; // Erro de leitura
         }
 
         if (bytes_received_now == 0) {
             // Conexão fechada pelo peer antes de todos os dados serem recebidos
-            // fprintf(stderr, "recv_packet: Conexão fechada. Esperado %zu bytes, recebido %zd no total.\n", bytes_to_receive, bytes_received_total);
+            printf("Conexão fechada inesperadamente\n");            
             return -1; // Conexão fechada
         }
         bytes_received_total += bytes_received_now;
+        printf("Bytes recebidos: %i\n", bytes_received_now);
     }
 
     // Se chegou aqui, todos os bytes foram recebidos

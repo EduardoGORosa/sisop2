@@ -23,6 +23,7 @@ void propagate_file_to_other_devices(UserSession_t *user_session, const char *ba
     printf("Propagando arquivo '%s' para outros dispositivos do usuário '%s'.\n", base_filename, user_session->username);
 
     lock_sessions(); // Lock before iterating connection_fds
+    printf("Entrou no lock 14\n");
     for (int i = 0; i < MAX_SESSIONS_PER_USER; i++) {
         int other_fd = user_session->connection_fds[i];
         if (other_fd > 0 && other_fd != originating_conn_fd) { // If connection active and not the source
@@ -32,13 +33,15 @@ void propagate_file_to_other_devices(UserSession_t *user_session, const char *ba
             strncpy(req_pkt.payload, base_filename, MAX_PAYLOAD -1);
             req_pkt.payload[MAX_PAYLOAD-1] = '\0';
             req_pkt.payload_size = (uint32_t)strlen(base_filename) + 1;
-
-            if (send_and_wait_ack_server(other_fd, &req_pkt) == 0) {
+            printf("Avisou que quer propagar \n");
+            if (send_and_wait_ack_server(other_fd, &req_pkt) == 0) {            
+                printf("Aviso que quer propagar voltou ok \n");
                 rewind(f_to_propagate); // Rewind file for each client
                 uint32_t seq = 2;
                 char buf[CHUNK_SIZE];
                 size_t n_read;
                 while ((n_read = fread(buf, 1, CHUNK_SIZE, f_to_propagate)) > 0) {
+                    printf("Enviando propagação \n");
                     packet_t data_pkt = { .type = PKT_UPLOAD_DATA, .seq_num = seq++, .payload_size = (uint32_t)n_read };
                     memcpy(data_pkt.payload, buf, n_read);
                     if (send_and_wait_ack_server(other_fd, &data_pkt) != 0) {
@@ -46,6 +49,7 @@ void propagate_file_to_other_devices(UserSession_t *user_session, const char *ba
                         break; 
                     }
                 }
+                printf("Terminou propagação \n");
                 if (ferror(f_to_propagate)) {
                      fprintf(stderr, "Erro de leitura ao propagar '%s' para fd=%d.\n", base_filename, other_fd);
                 } else {
@@ -60,7 +64,9 @@ void propagate_file_to_other_devices(UserSession_t *user_session, const char *ba
         }
     }
     unlock_sessions();
+    printf("Saiu no lock 14\n");
     fclose(f_to_propagate);
+    printf("Terminou de propagar\n");
 }
 
 // Helper function to propagate delete to other connected devices
@@ -70,6 +76,7 @@ void propagate_delete_to_other_devices(UserSession_t *user_session, const char *
     printf("Propagando deleção do arquivo '%s' para outros dispositivos do usuário '%s'.\n", base_filename, user_session->username);
 
     lock_sessions();
+    printf("Entrou no lock 15\n");
     for (int i = 0; i < MAX_SESSIONS_PER_USER; i++) {
         int other_fd = user_session->connection_fds[i];
         if (other_fd > 0 && other_fd != originating_conn_fd) {
@@ -89,6 +96,7 @@ void propagate_delete_to_other_devices(UserSession_t *user_session, const char *
         }
     }
     unlock_sessions();
+    printf("Saiu no lock 15\n");
 }
 
 

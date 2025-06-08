@@ -60,9 +60,11 @@ void *client_handler_thread(void *arg) {
 
 
     lock_sessions();
+    printf("Entrou no lock 16\n");
     UserSession_t *user_session = get_or_create_user_session_locked(username);
     if (!user_session) { // Should not happen if calloc worked
         unlock_sessions();
+        printf("Saiu no lock 16.1\n");
         fprintf(stderr, "Falha crítica ao obter/criar sessão para '%s'.\n", username);
         packet_t nack_resp = { .type = PKT_NACK, .seq_num = initial_pkt.seq_num };
          snprintf(nack_resp.payload, MAX_PAYLOAD, "Erro interno do servidor (sessão).");
@@ -74,6 +76,7 @@ void *client_handler_thread(void *arg) {
 
     if (add_connection_to_session_locked(user_session, conn_fd) != 0) {
         unlock_sessions();
+        printf("Saiu no lock 16.2\n");
         fprintf(stderr, "Usuário '%s' (fd=%d) excedeu o limite de conexões (%d).\n", username, conn_fd, MAX_SESSIONS_PER_USER);
         packet_t nack_resp = { .type = PKT_NACK, .seq_num = initial_pkt.seq_num };
         snprintf(nack_resp.payload, MAX_PAYLOAD, "Limite de conexões atingido.");
@@ -83,14 +86,17 @@ void *client_handler_thread(void *arg) {
         return NULL;
     }
     unlock_sessions();
+    printf("Saiu no lock 16.3\n");
 
     packet_t ack_resp = { .type = PKT_ACK, .seq_num = initial_pkt.seq_num, .payload_size = 0 };
     send_packet(conn_fd, &ack_resp);
     
     lock_sessions();
+    printf("Entrou no lock 17\n");
     printf("[+] Sessão iniciada para '%s' (fd=%d), total de conexões ativas para este usuário: %d\n",
            username, conn_fd, user_session->active_connections_count);
     unlock_sessions();
+    printf("Saiu no lock 17\n");
 
 
     char user_storage_base_dir[PATH_MAX];
@@ -110,9 +116,11 @@ void *client_handler_thread(void *arg) {
     // Client disconnected or error in recv_packet
     printf("[-] Conexão com fd=%d (usuário '%s') encerrada ou perdida.\n", conn_fd, username);
     lock_sessions();
+    printf("Entrou no lock 18\n");
     remove_connection_from_session_locked(user_session, conn_fd);
     printf("[-] Sessão para '%s' (fd=%d) finalizada. Conexões restantes para este usuário: %d\n",
            username, conn_fd, user_session->active_connections_count);
+    printf("Saiu no lock 18\n");
     unlock_sessions();
     close(conn_fd);
     return NULL;

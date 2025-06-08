@@ -1,9 +1,0 @@
-Comandos:
-  get_sync_dir
-  upload <arquivo>
-  download <arquivo>
-  delete <arquivo>
-  list_server
-  list_client
-  exit
-> 

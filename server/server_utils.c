@@ -35,12 +35,10 @@ void mkdir_p(const char *path, mode_t mode) {
 
 int send_and_wait_ack_server(int s, packet_t *p) {
     if (send_packet(s, p) != 0) {
-        // perror("send_packet failed in send_and_wait_ack_server");
         return -1;
     }
     packet_t a;
-    if (recv_packet(s, &a) != 0) {
-        // perror("recv_packet failed in send_and_wait_ack_server");
+    if (recv_packet(s, &a) != 0) {    
         return -1;
     }
     return (a.type == PKT_ACK) ? 0 : -1;

@@ -19,6 +19,10 @@
 char initial_cwd[PATH_MAX];
 pthread_mutex_t socket_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+typedef struct {
+    int sock;
+    pthread_mutex_t *socket_mutex;
+} ThreadArgs;
 
 // Função de cleanup em caso de falha após a criação do diretório sync_dir
 // Declarada antes de main para que main possa usá-la.
@@ -53,7 +57,6 @@ int main(int argc, char *argv[]) {
     char sync_dir_path[PATH_MAX];
     snprintf(sync_dir_path, PATH_MAX, "%s/sync_dir_%s", initial_cwd, user);
 
-    printf("Limpando diretório de sincronização anterior (se existir): %s\n", sync_dir_path);
     fflush(stdout);
     remove_directory_recursively(sync_dir_path); 
 
@@ -62,16 +65,12 @@ int main(int argc, char *argv[]) {
             perror("Erro ao criar o novo diretório sync_dir local");
             return 1; // Não há sync_dir para limpar aqui, pois mkdir falhou
         }
-        printf("Diretório '%s' já existia (limpeza anterior pode ter falhado parcialmente).\n", sync_dir_path);
-    } else {
-        printf("Novo diretório de sincronização '%s' criado.\n", sync_dir_path);
-    }
-    
+    } 
+
     if (chdir(sync_dir_path) != 0) {
         perror("Erro ao mudar para o diretório sync_dir local");
         cleanup_sync_dir_and_exit(-1, initial_cwd, sync_dir_path, 1); // Passa -1 para sock pois não foi aberto
     }
-    printf("Diretório de trabalho atual: %s\n", sync_dir_path);
 
 
     struct addrinfo hints, *servinfo, *p_servaddr;
@@ -112,6 +111,7 @@ int main(int argc, char *argv[]) {
     init_pkt.payload_size = (uint32_t)strlen(init_pkt.payload) + 1;
 
     pthread_mutex_lock(&socket_mutex);
+    printf("Entrou no lock 13\n");
     int init_send_ok = (send_packet(sock, &init_pkt) == 0);
     packet_t ack_pkt;
     int init_recv_ok = 0;
@@ -119,6 +119,7 @@ int main(int argc, char *argv[]) {
         init_recv_ok = (recv_packet(sock, &ack_pkt) == 0);
     }
     pthread_mutex_unlock(&socket_mutex);
+    printf("Saiu no lock 13\n");
 
     if (!init_send_ok) {
         fprintf(stderr, "Erro ao enviar informações de usuário para o servidor.\n");
@@ -133,29 +134,27 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Servidor recusou a conexão (PKT_NACK). Motivo: %s\n", ack_pkt.payload_size > 0 ? ack_pkt.payload : "Não especificado");
         cleanup_sync_dir_and_exit(sock, initial_cwd, sync_dir_path, 1);
     }
-    printf("Conectado ao servidor como '%s'.\n", user);
     fflush(stdout);
 
-    printf("Iniciando sincronização inicial com o servidor...\n");
     fflush(stdout);
     if (perform_initial_sync(sock) != 0) { 
         fprintf(stderr, "Falha durante a sincronização inicial. Alguns arquivos podem estar desatualizados.\n");
         fflush(stderr);
     } else {
-        printf("Sincronização inicial concluída.\n");
         fflush(stdout);
     }
 
     pthread_t inotify_tid = 0; 
     pthread_t listener_tid = 0;
-    int *sock_ptr_inotify = malloc(sizeof(int));
+    ThreadArgs *sock_ptr_inotify = malloc(sizeof(ThreadArgs));
     int *sock_ptr_listener = malloc(sizeof(int));
 
     if (!sock_ptr_inotify || !sock_ptr_listener) {
         perror("malloc for thread args failed");
         cleanup_sync_dir_and_exit(sock, initial_cwd, sync_dir_path, 1);
     }
-    *sock_ptr_inotify = sock;
+    sock_ptr_inotify->sock = sock;
+    sock_ptr_inotify->socket_mutex = &socket_mutex;
     *sock_ptr_listener = sock;
 
     if (pthread_create(&listener_tid, NULL, server_updates_listener_thread, sock_ptr_listener) != 0) {
@@ -233,8 +232,6 @@ int main(int argc, char *argv[]) {
         }
         fflush(stdout); 
     } // Fim do while(1) para o loop de comandos
-
-    printf("\nEncerrando cliente...\n");
     fflush(stdout);
     
     if (sock != -1) {
