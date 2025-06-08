@@ -15,7 +15,6 @@ typedef struct {
     pthread_mutex_t *socket_mutex;
 } ThreadArgs;
 
-
 #define MAX_FILE_NAME_LEN 256
 #define MAX_NUM_IGNORE_EVENTS 256
 char ignore_event[MAX_NUM_IGNORE_EVENTS][MAX_FILE_NAME_LEN];
