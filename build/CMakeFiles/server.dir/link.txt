@@ -1,0 +1,1 @@
+/usr/bin/c++  -Wall -Wextra -pthread -Wl,--dependency-file=CMakeFiles/server.dir/link.d CMakeFiles/server.dir/src/main_server.cpp.o CMakeFiles/server.dir/src/Server.cpp.o CMakeFiles/server.dir/src/Connection.cpp.o CMakeFiles/server.dir/src/Packet.cpp.o CMakeFiles/server.dir/src/FileManager.cpp.o -o server  -lpthread
