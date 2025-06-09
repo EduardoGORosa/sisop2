@@ -1,4 +1,5 @@
 Para compilar:
+  (Dentro do dir build)
   cmake ..
   make
 
