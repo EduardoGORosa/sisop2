@@ -1,4 +1,0 @@
-/home/dudu/repos/dropbox_clone/build/CMakeFiles/server.dir
-/home/dudu/repos/dropbox_clone/build/CMakeFiles/client.dir
-/home/dudu/repos/dropbox_clone/build/CMakeFiles/edit_cache.dir
-/home/dudu/repos/dropbox_clone/build/CMakeFiles/rebuild_cache.dir
