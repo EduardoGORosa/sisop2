@@ -1,3 +1,7 @@
+#Estas pastas e arquivos devem ser criadas na hora com cmake/make
 /.vscode
 /CMakeFiles
 /build/*
+
+#Este arquivo só existe para que a pasta build não seja deletada
+!/build/gitkeep
