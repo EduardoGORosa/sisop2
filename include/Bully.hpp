@@ -15,15 +15,16 @@ class Server;
 
 class Bully {
 public:
+    int myId_;
+    int leaderId_;
+
     Bully(int myId, std::map<int, ServerInfo> servers, Server* serverInstance);
     void start();
     void handleElectionMessage(const Packet& p, const std::string& senderIp, uint16_t senderPort);
     void stop();
 
 private:
-    int myId_;
     std::map<int, ServerInfo> servers_;
-    int leaderId_;
     std::atomic<bool> electionInProgress_;
     std::atomic<bool> running_;
     Server* server_;

@@ -2,6 +2,7 @@
 #include "Server.hpp"
 #include <iostream>
 #include <chrono>
+#include <unistd.h>
 
 Bully::Bully(int myId, std::map<int, ServerInfo> servers, Server* serverInstance)
     : myId_(myId),
@@ -131,16 +132,16 @@ void Bully::heartbeatLoop() {
         std::cout << "[BULLY] Leader " << myId_ << " sending heartbeats.\n";
         Packet heartbeatPkt{HEARTBEAT, 0, {}};
         broadcast(heartbeatPkt);
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 }
 
 void Bully::checkForLeaderFailure() {
     while (running_ && myId_ != leaderId_) {
         // Esta é uma implementação simplificada. Uma real usaria um timer que é resetado ao receber um heartbeat.
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // Timeout de 2 segundos
         std::cout << "[BULLY] Server " << myId_ << " hasn't received a heartbeat from leader " << leaderId_ << ". Starting election.\n";
         startElection();
+        std::this_thread::sleep_for(std::chrono::seconds(3)); // Timeout de 2 segundos
     }
 }
 

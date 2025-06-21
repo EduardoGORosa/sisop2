@@ -20,16 +20,16 @@ namespace fs = std::filesystem;
 
 Server::Server(const std::string& ip,
                uint16_t port,
-               const std::string& root)
+               const std::string& root,
+               int myId)
   : ip_(ip),
     port_(port),
     fm_(root),
     storageRoot_(root),
-    myId_(myId),
-    allServers_(allServers),
+    myId_(myId),    
     isLeader_(false)
 {
-    bully_ = std::make_unique<Bully>(myId, allServers, this);
+    bully_ = std::make_unique<Bully>(myId, allServers_, this);
 }
 
 void Server::run() {
@@ -70,7 +70,7 @@ void Server::run() {
         std::thread(&Server::watchLoop, this).detach();
     }
 
-    bully_->start()
+    this->bully_->start();
     acceptLoop();
 }
 
@@ -154,7 +154,7 @@ void Server::handleClient(int fd) {
     Connection conn(fd);
     Packet     p;
 
-    if (!isLeader_) {
+    if (this->bully_->myId_ == this->bully_->leaderId_) {
         std::cout << "[SERVER] I am a backup. Refusing client connection.\n";
         close(fd);
         return;

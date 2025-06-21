@@ -17,7 +17,8 @@ class Server {
 public:
     Server(const std::string& ip,
            uint16_t port,
-           const std::string& storageRoot);
+           const std::string& storageRoot,
+           int myId);
     void run();
     void becomeLeader();
 
@@ -51,7 +52,11 @@ private:
     // Bully variables
     std::unique_ptr<Bully> bully_;
     int myId_;
-    std::map<int, ServerInfo> allServers_;
+    std::map<int, ServerInfo> allServers_ = {
+        {10, {"127.0.0.1", 8001}},
+        {20, {"127.0.0.1", 8002}},
+        {30, {"127.0.0.1", 8003}}
+    };
     std::atomic<bool> isLeader_;
 
     void acceptLoop();
