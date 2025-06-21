@@ -10,6 +10,7 @@
 
 #include "FileManager.hpp"
 #include "Packet.hpp"
+#include "Connection.hpp"
 
 class Client {
 public:
@@ -34,6 +35,10 @@ private:
     int               inotifyFd_;
     int               inotifyWd_;
 
+    // conexão com o servidor
+    std::thread srv_;
+    std::unique_ptr<Connection> conn_;
+
     // evita eco dos próprios syncs
     std::unordered_set<std::string> syncing_;
     std::mutex                     syncMtx_;
@@ -48,5 +53,6 @@ private:
     // helpers
     void sendUpload(const std::string& path);
     void sendDelete(const std::string& fn);
+    void connectToServer(const std::string& ip,uint16_t port);
 };
 

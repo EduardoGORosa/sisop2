@@ -34,8 +34,15 @@ void Server::run() {
     addr.sin_family      = AF_INET;
     addr.sin_addr.s_addr = inet_addr(ip_.c_str());
     addr.sin_port        = htons(port_);
-    bind(listenFd_, (sockaddr*)&addr, sizeof(addr));
-    listen(listenFd_, 10);
+
+    if(bind(listenFd_, (sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("[server] Error on bind:");  
+        exit(1);
+    }
+    if(listen(listenFd_, 10) < 0) {
+        perror("[server] Error on listen:");  
+        exit(1);
+    }        
     std::cout << "[server] listening on " << ip_ << ":" << port_ << "\n";
 
     watchFd_ = inotify_init();

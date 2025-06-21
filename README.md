@@ -15,7 +15,7 @@ Para rodar cliente:
 Exemplo:
 
 Server
-../dropbox/build/server 127.0.0.1 12345
+../../dropbox/build/server 127.0.0.1 12345
 
 Client
-../dropbox/build/client username 127.0.0.1 12345
+../../dropbox/build/client username 127.0.0.1 12345
