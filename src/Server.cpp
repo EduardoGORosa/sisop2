@@ -26,7 +26,7 @@ Server::Server(const std::string& ip,
     storageRoot_(root)
 {}
 
-void Server::run() {
+void Server::run(int new_leader) {
     listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
     setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -64,7 +64,53 @@ void Server::run() {
         std::thread(&Server::watchLoop, this).detach();
     }
 
+    if(new_leader){
+        connectToClient("127.0.0.1", reconnect_port_);
+        forceReconnect("127.0.0.1", this->port_);
+    }
+
     acceptLoop();
+}
+
+void Server::connectToClient(const std::string& ip,uint16_t port){
+    // cria e conecta o socket
+    this->reconnect_sock_ = socket(AF_INET, SOCK_STREAM, 0);
+    if (this->reconnect_sock_ < 0) {
+        perror("[Server] socket");
+        std::exit(1);
+    }
+    sockaddr_in addr{};
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    addr.sin_port        = htons(port);
+    
+    if (connect(this->reconnect_sock_, (sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("[Server] connect");
+        std::exit(1);
+    }    
+
+    this->reconnect_conn_ = std::make_unique<Connection>(this->reconnect_sock_);
+    std::cout << "[Server] Connected to client IP " << ip << " , PORT " << port << "\n";    
+}
+
+void Server::forceReconnect(const std::string& ip, uint16_t port) {    
+    std::vector<char> payload;
+    
+    uint8_t ip_len = static_cast<uint8_t>(ip.size());
+    payload.push_back(static_cast<char>(ip_len));
+    payload.insert(payload.end(), ip.begin(), ip.end());
+    
+    uint16_t net_port = htons(port);  
+    const char* port_bytes = reinterpret_cast<const char*>(&net_port);
+    payload.insert(payload.end(), port_bytes, port_bytes + sizeof(net_port));
+
+    Packet p{
+        CMD_REGISTER,
+        static_cast<uint32_t>(payload.size()),
+        payload
+    };
+    this->reconnect_conn_->sendPacket(p);
+    std::cout << "[client] registration sent\n";
 }
 
 void Server::acceptLoop() {

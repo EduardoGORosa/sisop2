@@ -25,6 +25,8 @@ private:
     std::string       user_, ip_;
     uint16_t          port_;
     int               sock_;
+    int               reconnect_sock_;
+    const int         reconnect_port_ = 1212;
 
     // storage local
     FileManager       fm_;
@@ -53,6 +55,10 @@ private:
     // helpers
     void sendUpload(const std::string& path);
     void sendDelete(const std::string& fn);
+
+    // communication
     void connectToServer(const std::string& ip,uint16_t port);
+    void listenReconnection();
+    void acceptLoop();
 };
 

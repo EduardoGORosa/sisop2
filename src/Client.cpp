@@ -31,7 +31,9 @@ Client::Client(const std::string& u,
     running_(true)
 {
     // garante que o diretório de sync exista
-    fs::create_directories(syncDir_);    
+    fs::create_directories(syncDir_); 
+    
+    listenReconnection();
 
     sock_ = -1;   // para dizer a função connectToServer que esta é a primeira conexão
     connectToServer(ip, p);
@@ -104,6 +106,50 @@ void Client::sendRegister() {
     };
     conn_->sendPacket(p);
     std::cout << "[client] registration sent\n";
+}
+
+void Client::listenReconnection() {
+    this->reconnect_sock_ = socket(AF_INET, SOCK_STREAM, 0);
+    int opt = 1;
+    setsockopt(this->reconnect_sock_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    sockaddr_in addr{};
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = inet_addr(ip_.c_str());
+    addr.sin_port        = htons(reconnect_port_);
+
+    if(bind(this->reconnect_sock_, (sockaddr*)&addr, sizeof(addr)) < 0) {
+        perror("[Client] Error on bind:");  
+        exit(1);
+    }
+    if(listen(this->reconnect_sock_, 10) < 0) {
+        perror("[Client] Error on listen:");  
+        exit(1);
+    }        
+    std::thread(&Client::acceptLoop, this).detach();
+    std::cout << "[Client] listening on " << ip_ << ":" << reconnect_port_ << "\n";
+}
+
+void Client::acceptLoop() {
+    while (true) {
+        sockaddr_in cli; 
+        socklen_t len = sizeof(cli);
+        int fd = accept(reconnect_sock_, (sockaddr*)&cli, &len);
+
+        Connection reconnect_conn(fd);
+        Packet p;
+        if (reconnect_conn.recvPacket(p) && p.type == CMD_REGISTER) {            
+                        
+            uint8_t ip_len = static_cast<uint8_t>(p.payload[0]);
+            std::string new_ip(p.payload.begin() + 1, p.payload.begin() + 1 + ip_len);
+
+            uint16_t new_port;
+            std::memcpy(&new_port, &p.payload[1 + ip_len], sizeof(new_port));
+            new_port = ntohs(new_port);  // se você usou htons para enviar
+            
+            connectToServer(new_ip, new_port);
+        }
+        
+    }
 }
 
 void Client::userLoop() {    
@@ -209,12 +255,7 @@ void Client::serverLoop() {
 }
 
 void Client::handleServerPacket(const Packet& p) {
-    const char* b = p.payload.data();
-    std::cout << "[client] Vai tentar checar...\n";
-    if (p.type == CMD_LIST_SERVER) {
-        std::cout << "[client] Entrou no teste.\n";
-    }
-    std::cout << "[client] Passou sem erros. \n";
+    const char* b = p.payload.data();    
     
     if (p.type == CMD_UPLOAD) {
         

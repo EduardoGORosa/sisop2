@@ -10,13 +10,14 @@
 
 #include "FileManager.hpp"
 #include "Packet.hpp"
+#include "Connection.hpp"
 
 class Server {
 public:
     Server(const std::string& ip,
            uint16_t port,
            const std::string& storageRoot);
-    void run();
+    void run(int new_leader);
 
 private:
     std::string ip_;
@@ -40,11 +41,18 @@ private:
     std::unordered_set<std::string>            syncing_;
     std::mutex                                 syncMtx_;
 
+    // conexão com o cliente para pedir reconexões quando o servidor cai
+    int reconnect_sock_;    
+    std::unique_ptr<Connection> reconnect_conn_;
+    const int reconnect_port_ = 1212;
+
     void acceptLoop();
     void handleClient(int fd);
     void broadcast(const std::string& user,
                    const Packet& pkt,
                    int exceptFd);
     void watchLoop();
+    void connectToClient(const std::string& ip,uint16_t port);
+    void forceReconnect(const std::string& ip, uint16_t port);    
 };
 
