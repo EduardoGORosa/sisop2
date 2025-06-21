@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Connection.hpp"
+#include "Bully.hpp"
 
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -23,10 +24,15 @@ Server::Server(const std::string& ip,
   : ip_(ip),
     port_(port),
     fm_(root),
-    storageRoot_(root)
-{}
+    storageRoot_(root),
+    myId_(myId),
+    allServers_(allServers),
+    isLeader_(false)
+{
+    bully_ = std::make_unique<Bully>(myId, allServers, this);
+}
 
-void Server::run(int new_leader) {
+void Server::run() {
     listenFd_ = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
     setsockopt(listenFd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -64,12 +70,15 @@ void Server::run(int new_leader) {
         std::thread(&Server::watchLoop, this).detach();
     }
 
-    if(new_leader){
-        connectToClient("127.0.0.1", reconnect_port_);
-        forceReconnect("127.0.0.1", this->port_);
-    }
-
+    bully_->start()
     acceptLoop();
+}
+
+void Server::becomeLeader() {
+    isLeader_ = true;
+    std::cout << "[SERVER] I am the new leader!\n";
+    connectToClient("127.0.0.1", reconnect_port_);
+    forceReconnect("127.0.0.1", this->port_);
 }
 
 void Server::connectToClient(const std::string& ip,uint16_t port){
@@ -121,9 +130,35 @@ void Server::acceptLoop() {
     }
 }
 
+void Server::handleServerMessage(int fd) {
+    Connection conn(fd);
+    Packet p;
+    // Tenta receber um pacote. Se não conseguir em um certo tempo, assume que é um cliente.
+    // Uma implementação robusta teria um handshake.
+    if (conn.recvPacket(p)) {
+        char ip_str[INET_ADDRSTRLEN];
+        sockaddr_in peer_addr;
+        socklen_t peer_addr_len = sizeof(peer_addr);
+        getpeername(fd, (struct sockaddr*)&peer_addr, &peer_addr_len);
+        inet_ntop(AF_INET, &peer_addr.sin_addr, ip_str, INET_ADDRSTRLEN);
+
+        bully_->handleElectionMessage(p, ip_str, ntohs(peer_addr.sin_port));
+        close(fd);
+    } else {
+        // Assume que é um cliente se não enviar um pacote de eleição rapidamente
+        handleClient(fd);
+    }
+}
+
 void Server::handleClient(int fd) {
     Connection conn(fd);
     Packet     p;
+
+    if (!isLeader_) {
+        std::cout << "[SERVER] I am a backup. Refusing client connection.\n";
+        close(fd);
+        return;
+    }
 
     if (!conn.recvPacket(p) || p.type != CMD_REGISTER) {
         close(fd);

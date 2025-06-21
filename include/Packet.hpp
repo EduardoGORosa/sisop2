@@ -12,7 +12,13 @@ enum PacketType : uint16_t {
     CMD_DELETE      = 3,
     CMD_LIST_SERVER = 4,
     CMD_EXIT        = 5,
-    CMD_FILE_CHUNK  = 6
+    CMD_FILE_CHUNK  = 6,
+
+    // Mensagens para Eleição
+    HEARTBEAT       = 100,
+    ELECTION        = 101,
+    ANSWER          = 102,
+    COORDINATOR     = 103
 };
 
 struct Packet {
