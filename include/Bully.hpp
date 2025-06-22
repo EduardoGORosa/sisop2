@@ -22,6 +22,7 @@ public:
     void start();
     void handleElectionMessage(const Packet& p, const std::string& senderIp, uint16_t senderPort);
     void stop();
+    void sendPacketTo(int serverId, const Packet& p);
 
 private:
     std::map<int, ServerInfo> servers_;
@@ -32,7 +33,6 @@ private:
     std::thread electionTimerThread_;
 
     void startElection();
-    void sendPacketTo(int serverId, const Packet& p);
     void broadcast(const Packet& p);
     void heartbeatLoop();
     void checkForLeaderFailure();

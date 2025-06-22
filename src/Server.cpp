@@ -154,7 +154,7 @@ void Server::handleClient(int fd) {
     Connection conn(fd);
     Packet     p;
 
-    if (this->bully_->myId_ == this->bully_->leaderId_) {
+    if (bully_->leaderId_ != this->myId_) {
         std::cout << "[SERVER] I am a backup. Refusing client connection.\n";
         close(fd);
         return;
@@ -296,11 +296,19 @@ void Server::broadcast(const std::string& user,
                        const Packet& pkt,
                        int exceptFd)
 {
-    std::lock_guard lk(clMtx_);
-    for (int fd : clients_[user]) {
-        if (fd == exceptFd) continue;
-        Connection c(fd);
-        c.sendPacket(pkt);
+    std::cout << "[SERVER] Meu id: " << myId_ << " , leader id: "<< bully_->leaderId_ << "\n";
+    if(bully_->leaderId_ == myId_){   // backups não fazem broadcast        
+        std::lock_guard lk(clMtx_);
+        for (int fd : clients_[user]) {
+            if (fd == exceptFd) continue;
+            Connection c(fd);
+            c.sendPacket(pkt);
+        }        
+        for (const auto& [id, server] : allServers_) {            
+            if (server.ip == ip_ && server.port == port_) continue;        
+            std::cout << "[SERVER] Enviando broadcast para ID " << id << "\n";
+            bully_->sendPacketTo(id, pkt);        
+        }  
     }
 }
 

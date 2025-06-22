@@ -14,6 +14,7 @@ add_executable(server
     src/Connection.cpp
     src/Packet.cpp
     src/FileManager.cpp
+    src/Bully.cpp
 )
 
 # executável do cliente
