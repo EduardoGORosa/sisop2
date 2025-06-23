@@ -1,0 +1,650 @@
+[SERVER] Starting server 20 on 127.0.0.1:8002 with storage: ./storage_20
+[server] listening on 127.0.0.1:8002
+[BULLY] Starting as backup, monitoring leader 30
+[BULLY] Starting failure detection loop, monitoring leader 30
+[BULLY] Unknown sender: 127.0.0.1:56514
+[BULLY] Unknown sender: 127.0.0.1:56520
+[BULLY] Unknown sender: 127.0.0.1:56522
+[BULLY] Unknown sender: 127.0.0.1:56530
+[BULLY] Leader 30 failure detected, starting election
+[BULLY] Failure detection loop ended for 20
+[BULLY] Server 20 starting election
+[BULLY] Sending ELECTION to server 30
+[BULLY] Waiting for responses from higher servers
+[BULLY] Unknown sender: 127.0.0.1:56536
+[BULLY] Unknown sender: 127.0.0.1:56552
+[BULLY] Unknown sender: 127.0.0.1:56554
+[BULLY] Unknown sender: 127.0.0.1:56558
+[BULLY] Unknown sender: 127.0.0.1:56574
+[BULLY] Unknown sender: 127.0.0.1:56576
+[BULLY] Unknown sender: 127.0.0.1:60420
+[BULLY] Unknown sender: 127.0.0.1:60424
+[BULLY] Unknown sender: 127.0.0.1:60436
+[BULLY] Unknown sender: 127.0.0.1:60444
+[BULLY] Unknown sender: 127.0.0.1:60454
+[BULLY] Unknown sender: 127.0.0.1:60464
+[BULLY] Unknown sender: 127.0.0.1:60468
+[BULLY] Unknown sender: 127.0.0.1:60474
+[BULLY] Unknown sender: 127.0.0.1:60478
+[BULLY] Unknown sender: 127.0.0.1:60492
+[BULLY] Timeout waiting for COORDINATOR, becoming leader
+[SERVER] I am the new leader!
+[Server] Connected to client IP 127.0.0.1 , PORT 1212
+[client] registration sent
+[BULLY] Starting heartbeat loop for leader 20
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48312
+[server] user 'dudu' connected
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48338
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48350
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48358
+[BULLY] Unknown sender: 127.0.0.1:48374
+[BULLY] Unknown sender: 127.0.0.1:48376
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48378
+[BULLY] Unknown sender: 127.0.0.1:48382
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48396
+[BULLY] Unknown sender: 127.0.0.1:48406
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48426
+[BULLY] Unknown sender: 127.0.0.1:48422
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48448
+[BULLY] Unknown sender: 127.0.0.1:48440
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48476
+[BULLY] Unknown sender: 127.0.0.1:48464
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48482
+[BULLY] Unknown sender: 127.0.0.1:48490
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1:127.0.0.1:56324
+56320
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56326
+[BULLY] Unknown sender: 127.0.0.1:56342
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 56360
+127.0.0.1:56358
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56364
+[BULLY] Unknown sender: 127.0.0.1:56378
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56382
+[BULLY] Unknown sender: 127.0.0.1:56396
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56412
+[BULLY] Unknown sender: 127.0.0.1:56416
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56436
+[BULLY] Unknown sender: 127.0.0.1:56432
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56440
+[BULLY] Unknown sender: 127.0.0.1:56452
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56480
+[BULLY] Unknown sender: 127.0.0.1:56468
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:56488
+[BULLY] Unknown sender: 127.0.0.1:56484
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38768
+[BULLY] Unknown sender: 127.0.0.1:38766
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38782
+[BULLY] Unknown sender: 127.0.0.1:38774
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38800
+[BULLY] Unknown sender: 127.0.0.1:38788
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38818
+[BULLY] Unknown sender: 127.0.0.1:38802
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38824
+[BULLY] Unknown sender: 127.0.0.1:38832
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38852
+[BULLY] Unknown sender: 127.0.0.1:38844
+[BULLY] Unknown sender: 127.0.0.1:38858
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38868
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38874
+[BULLY] Unknown sender: 127.0.0.1:38890
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38896
+[BULLY] Unknown sender: 127.0.0.1:38902
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38910
+[BULLY] Unknown sender: 127.0.0.1:38924
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55752
+[BULLY] Unknown sender: 127.0.0.1:55754
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55760
+[BULLY] Unknown sender: 127.0.0.1:55774
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55776
+[BULLY] Unknown sender: 127.0.0.1:55786
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55790
+[BULLY] Unknown sender: 127.0.0.1:55800
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55802
+[BULLY] Unknown sender: 127.0.0.1:55816
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:55820
+55832
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55852
+[BULLY] Unknown sender: 127.0.0.1:55840
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55854
+[BULLY] Unknown sender: 127.0.0.1:55866
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55878
+[BULLY] Unknown sender: 127.0.0.1:55884
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:55898
+[BULLY] Unknown sender: 127.0.0.1:55902
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1127.0.0.1::40278
+40276
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40288
+[BULLY] Unknown sender: 127.0.0.1:40284
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40310
+[BULLY] Unknown sender: 127.0.0.1:40302
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40324
+[BULLY] Unknown sender: 127.0.0.1:40316
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:4035640340
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40384
+[BULLY] Unknown sender: 127.0.0.1:40368
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40394
+[BULLY] Unknown sender: 127.0.0.1:40392
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40398
+[BULLY] Unknown sender: 127.0.0.1:40412
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40426
+[BULLY] Unknown sender: 127.0.0.1:40420
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:40430
+[BULLY] Unknown sender: 127.0.0.1:40444
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48760
+[BULLY] Unknown sender: 127.0.0.1:48774
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48786
+[BULLY] Unknown sender: 127.0.0.1:48792
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 48810
+127.0.0.1:48804
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48816
+[BULLY] Unknown sender: 127.0.0.1:48826
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48838
+[BULLY] Unknown sender: 127.0.0.1:48848
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48858
+[BULLY] Unknown sender: 127.0.0.1:48868
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48878
+[BULLY] Unknown sender: 127.0.0.1:48890
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48896
+[BULLY] Unknown sender: 127.0.0.1:48910
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48922
+[BULLY] Unknown sender: 127.0.0.1:48918
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:48936
+[BULLY] Unknown sender: 127.0.0.1:48930
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52184
+[BULLY] Unknown sender: 127.0.0.1:52168
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52186
+[BULLY] Unknown sender: 127.0.0.1:52194
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52210
+[BULLY] Unknown sender: 127.0.0.1:52204
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52222
+[BULLY] Unknown sender: 127.0.0.1:52216
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52234
+[BULLY] Unknown sender: 127.0.0.1:52224
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:5225052242
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52252
+[BULLY] Unknown sender: 127.0.0.1:52254
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52272
+[BULLY] Unknown sender: 127.0.0.1:52260
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52288
+[BULLY] Unknown sender: 127.0.0.1:52282
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:52302
+[BULLY] Unknown sender: 127.0.0.1:52298
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47266
+[BULLY] Unknown sender: 127.0.0.1:47250
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47278
+[BULLY] Unknown sender: 127.0.0.1:47292
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47308
+[BULLY] Unknown sender: 127.0.0.1:47306
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:47334
+47320
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47354
+[BULLY] Unknown sender: 127.0.0.1:47342
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 47362
+127.0.0.1:47356
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47376
+[BULLY] Unknown sender: 127.0.0.1:47380
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47386
+[BULLY] Unknown sender: 127.0.0.1:47388
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47394
+[BULLY] Unknown sender: 127.0.0.1:47408
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:47430
+[BULLY] Unknown sender: 127.0.0.1:47420
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:45976
+[BULLY] Unknown sender: 127.0.0.1:45966
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:4598645984
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:45996
+[BULLY] Unknown sender: 127.0.0.1:45992
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46016
+[BULLY] Unknown sender: 127.0.0.1:46000
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46026
+[BULLY] Unknown sender: 127.0.0.1:46032
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46046
+[BULLY] Unknown sender: 127.0.0.1:46048
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46056
+[BULLY] Unknown sender: 127.0.0.1:46070
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46084
+[BULLY] Unknown sender: 127.0.0.1:46098
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46114
+[BULLY] Unknown sender: 127.0.0.1:46120
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46128
+[BULLY] Unknown sender: 127.0.0.1:46144
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46488
+[BULLY] Unknown sender: 127.0.0.1:46496
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46504
+[BULLY] Unknown sender: 127.0.0.1:46514
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46538
+[BULLY] Unknown sender: 127.0.0.1:46522
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46548
+[BULLY] Unknown sender: 127.0.0.1:46564
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46568
+[BULLY] Unknown sender: 127.0.0.1:46578
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46588
+[BULLY] Unknown sender: 127.0.0.1:46590
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46604
+[BULLY] Unknown sender: 127.0.0.1:46612
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46628
+[BULLY] Unknown sender: 127.0.0.1:46642
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46656
+[BULLY] Unknown sender: 127.0.0.1:46668
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:46674
+[BULLY] Unknown sender: 127.0.0.1:46680
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50202
+[BULLY] Unknown sender: 127.0.0.1:50218
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50222
+[BULLY] Unknown sender: 127.0.0.1:50220
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50228
+[BULLY] Unknown sender: 127.0.0.1:50232
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50236
+[BULLY] Unknown sender: 127.0.0.1:50244
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50246
+[BULLY] Unknown sender: 127.0.0.1:50256
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50258
+[BULLY] Unknown sender: 127.0.0.1:50272
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50292
+[BULLY] Unknown sender: 127.0.0.1:50284
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50304
+[BULLY] Unknown sender: 127.0.0.1:50294
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50314
+[BULLY] Unknown sender: 127.0.0.1:50324
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50326
+[BULLY] Unknown sender: 127.0.0.1:50334
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38350
+[BULLY] Unknown sender: 127.0.0.1:38358
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38370
+[BULLY] Unknown sender: 127.0.0.1:38372
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38376
+[BULLY] Unknown sender: 127.0.0.1:38390
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38406
+[BULLY] Unknown sender: 127.0.0.1:38398
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38422
+[BULLY] Unknown sender: 127.0.0.1:38430
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38446
+[BULLY] Unknown sender: 127.0.0.1:38434
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38454
+[BULLY] Unknown sender: 127.0.0.1:38460
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:38484
+38474
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1127.0.0.1::38496
+38506
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:38520
+[BULLY] Unknown sender: 127.0.0.1:38532
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1:127.0.0.1:3700436988
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1127.0.0.1::37020
+37032
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37046
+[BULLY] Unknown sender: 127.0.0.1:37044
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37060
+[BULLY] Unknown sender: 127.0.0.1:37074
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37076
+[BULLY] Unknown sender: 127.0.0.1:37090
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37094
+[BULLY] Unknown sender: 127.0.0.1:37102
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37118
+[BULLY] Unknown sender: 127.0.0.1:37116
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37138
+[BULLY] Unknown sender: 127.0.0.1:37130
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 37154127.0.0.1
+:37142
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:37160
+[BULLY] Unknown sender: 127.0.0.1:37176
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32834
+[BULLY] Unknown sender: 127.0.0.1:32840
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32852
+[BULLY] Unknown sender: 127.0.0.1:32868
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32874
+[BULLY] Unknown sender: 127.0.0.1:32888
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32908
+[BULLY] Unknown sender: 127.0.0.1:32896
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32932
+[BULLY] Unknown sender: 127.0.0.1:32918
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32952
+[BULLY] Unknown sender: 127.0.0.1:32944
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32970
+[BULLY] Unknown sender: 127.0.0.1:32966
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:32990
+[BULLY] Unknown sender: 127.0.0.1:32974
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33004
+[BULLY] Unknown sender: 127.0.0.1:32996
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33020
+[BULLY] Unknown sender: 127.0.0.1:33016
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1127.0.0.1::57832
+57824
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57844
+[BULLY] Unknown sender: 127.0.0.1:57842
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57854
+[BULLY] Unknown sender: 127.0.0.1:57846
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57876
+[BULLY] Unknown sender: 127.0.0.1:57868
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57900
+[BULLY] Unknown sender: 127.0.0.1:57888
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57914
+[BULLY] Unknown sender: 127.0.0.1:57906
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57926
+[BULLY] Unknown sender: 127.0.0.1:57920
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57932
+[BULLY] Unknown sender: 127.0.0.1:57930
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57950
+[BULLY] Unknown sender: 127.0.0.1:57942
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:57958
+[BULLY] Unknown sender: 127.0.0.1:57954
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36676
+[BULLY] Unknown sender: 127.0.0.1:36666
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36700
+[BULLY] Unknown sender: 127.0.0.1:36692
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36706
+[BULLY] Unknown sender: 127.0.0.1:36708
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36720
+[BULLY] Unknown sender: 127.0.0.1:36726
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36732
+[BULLY] Unknown sender: 127.0.0.1:36742
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36744
+[BULLY] Unknown sender: 127.0.0.1:36748
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36758
+[BULLY] Unknown sender: 127.0.0.1:36774
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36780
+[BULLY] Unknown sender: 127.0.0.1:36790
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36802
+[BULLY] Unknown sender: 127.0.0.1:36794
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:36816
+[BULLY] Unknown sender: 127.0.0.1:36810
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44474
+[BULLY] Unknown sender: 127.0.0.1:44476
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44494
+[BULLY] Unknown sender: 127.0.0.1:44478
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:4449844504
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44524
+[BULLY] Unknown sender: 127.0.0.1:44508
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44546
+[BULLY] Unknown sender: 127.0.0.1:44534
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44566
+[BULLY] Unknown sender: 127.0.0.1:44552
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1:127.0.0.1:44580
+44574
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44596
+[BULLY] Unknown sender: 127.0.0.1:44608
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44616
+[BULLY] Unknown sender: 127.0.0.1:44610
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:44644
+[BULLY] Unknown sender: 127.0.0.1:44632
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: [BULLY] Unknown sender: 127.0.0.1127.0.0.1::33468
+33484
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33494
+[BULLY] Unknown sender: 127.0.0.1:33504
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:3351233528
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:3354233556
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33570
+[BULLY] Unknown sender: 127.0.0.1:33580
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33592
+[BULLY] Unknown sender: 127.0.0.1:33602
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33626
+[BULLY] Unknown sender: 127.0.0.1:33612
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:33650
+33638
+[BULLY] Unknown sender: 127.0.0.1:33656
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33664
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:33674
+[BULLY] Unknown sender: 127.0.0.1:33682
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49468
+[BULLY] Unknown sender: 127.0.0.1:49474
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49486
+[BULLY] Unknown sender: 127.0.0.1:49488
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49504
+[BULLY] Unknown sender: 127.0.0.1:49510
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 49532127.0.0.1
+:49522
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49534
+[BULLY] Unknown sender: 127.0.0.1:49544
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49546
+[BULLY] Unknown sender: 127.0.0.1:49560
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49568
+[BULLY] Unknown sender: 127.0.0.1:49580
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1[BULLY] Unknown sender: 127.0.0.1::49592
+49608
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49624
+[BULLY] Unknown sender: 127.0.0.1:49634
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49640
+[BULLY] Unknown sender: 127.0.0.1:49650
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49898
+[BULLY] Unknown sender: 127.0.0.1:49910
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49914
+[BULLY] Unknown sender: 127.0.0.1:49920
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49940
+[BULLY] Unknown sender: 127.0.0.1:49926
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49958
+[BULLY] Unknown sender: 127.0.0.1:49950
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49976
+[BULLY] Unknown sender: 127.0.0.1:49968
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] Unknown sender: 127.0.0.1:4998049992
+
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:49998
+[BULLY] Unknown sender: 127.0.0.1:50008
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50022
+[BULLY] Unknown sender: 127.0.0.1:50030
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50044
+[BULLY] Unknown sender: 127.0.0.1:50048
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:50062
+[BULLY] Unknown sender: 127.0.0.1:50072
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:39932
+[BULLY] Unknown sender: 127.0.0.1:39930
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:39946
+[BULLY] Unknown sender: 127.0.0.1:39938
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:39962
+[BULLY] Unknown sender: 127.0.0.1:39960
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:39986
+[BULLY] Unknown sender: 127.0.0.1:39972
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:39992
+[BULLY] Unknown sender: 127.0.0.1:40006
+[BULLY] Leader 20 sent heartbeat
+[BULLY] Unknown sender: 127.0.0.1:[BULLY] U
