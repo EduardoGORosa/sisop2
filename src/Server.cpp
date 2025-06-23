@@ -26,8 +26,7 @@ Server::Server(const std::string& ip,
     port_(port),
     fm_(root),
     storageRoot_(root),
-    myId_(myId),    
-    isLeader_(false)
+    myId_(myId)    
 {
     bully_ = std::make_unique<Bully>(myId, allServers_, this);
 }
@@ -75,10 +74,11 @@ void Server::run() {
 }
 
 void Server::becomeLeader() {
-    isLeader_ = true;
+    bully_->leaderId_ = this->myId_;    
     std::cout << "[SERVER] I am the new leader!\n";
+    std::cout << "[SERVER] tentando conectar no cliente na porta " << reconnect_port_ << " , mapeando para porta do servidor "<<port_<<" \n";
     connectToClient("127.0.0.1", reconnect_port_);
-    forceReconnect("127.0.0.1", this->port_);
+    forceReconnect(ip_, port_);
 }
 
 void Server::connectToClient(const std::string& ip,uint16_t port){
@@ -154,15 +154,11 @@ void Server::handleClient(int fd) {
     Connection conn(fd);
     Packet     p;
 
-    if (bully_->leaderId_ != this->myId_) {
-        std::cout << "[SERVER] I am a backup. Refusing client connection.\n";
-        close(fd);
-        return;
-    }
-
-    if (!conn.recvPacket(p) || p.type != CMD_REGISTER) {
-        close(fd);
-        return;
+    if (bully_->leaderId_ == this->myId_){
+        if (!conn.recvPacket(p) || p.type != CMD_REGISTER) {
+            close(fd);
+            return;
+        }
     }
     std::string user(p.payload.begin(), p.payload.end());
     {
@@ -170,7 +166,10 @@ void Server::handleClient(int fd) {
         clients_[user].push_back(fd);
     }
     fm_.ensureUserDir(user);
-    std::cout << "[server] user '" << user << "' connected\n";
+
+    if (bully_->leaderId_ == this->myId_){
+        std::cout << "[server] user '" << user << "' connected\n";
+    }
 
     {
         std::lock_guard lk(watchMtx_);
@@ -288,6 +287,10 @@ void Server::handleClient(int fd) {
                 sp.length = sp.payload.size();
                 conn.sendPacket(sp);
             }
+        }
+        else if (p.type == HEARTBEAT) {
+            std::cout << "[BULLY] Recebeu HEARTBEAT.\n";
+            bully_->leaderAlive_ = true;
         }
     }
 }

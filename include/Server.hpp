@@ -56,8 +56,7 @@ private:
         {10, {"127.0.0.1", 8001}},
         {20, {"127.0.0.1", 8002}},
         {30, {"127.0.0.1", 8003}}
-    };
-    std::atomic<bool> isLeader_;
+    };    
 
     void acceptLoop();
     void handleClient(int fd);

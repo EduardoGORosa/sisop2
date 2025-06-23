@@ -70,8 +70,14 @@ void Bully::startElection() {
             std::this_thread::sleep_for(std::chrono::seconds(5));
             if (electionInProgress_) {
                 // Timeout, ninguém respondeu. Eu sou o líder.
-                leaderId_ = myId_;
-                std::cout << "[BULLY] Server " << myId_ << " elected as new leader after timeout.\n";
+                //leaderId_ = myId_;
+                if(leaderId_ == 20){
+                    leaderId_ = 10;
+                }
+                else{
+                    leaderId_ = 20;
+                }
+                std::cout << "[BULLY] Server " << leaderId_ << " elected as new leader after timeout.\n";
                 Packet coordinatorPkt{COORDINATOR, sizeof(int), {}};
                 char* p = (char*)&myId_;
                 coordinatorPkt.payload.assign(p, p+sizeof(int));
@@ -101,12 +107,19 @@ void Bully::handleElectionMessage(const Packet& p, const std::string& senderIp, 
             std::cout << "[BULLY] Received ELECTION from " << senderId << ". Sending ANSWER.\n";
             Packet answerPkt{ANSWER, 0, {}};
             sendPacketTo(senderId, answerPkt);
+            // {
+            //     std::lock_guard lk(this->clMtx_);
+            answerReceived_ = false;
             startElection(); // Eu tenho um ID maior, então começo minha própria eleição
+            // }
         }
     } else if (p.type == ANSWER) {
-        std::cout << "[BULLY] Received ANSWER. I will not be the leader.\n";
-        electionInProgress_ = false; // Alguém com ID maior está ativo
-        // Iniciar timer para esperar a mensagem COORDINATOR
+        std::cout << "[BULLY] Received ANSWER. I will not be the leader.\n";        
+        {
+            std::lock_guard<std::mutex> lk(clMtx_);
+            answerReceived_ = true;
+        }
+        electionCv_.notify_one(); 
     } else if (p.type == COORDINATOR) {
         int newLeaderId;
         memcpy(&newLeaderId, p.payload.data(), sizeof(int));
@@ -122,9 +135,7 @@ void Bully::handleElectionMessage(const Packet& p, const std::string& senderIp, 
              server_->becomeLeader();
         }
 
-    } else if (p.type == HEARTBEAT) {
-        // Resetar o timer de falha do líder (implementado em checkForLeaderFailure)
-    }
+    } 
 }
 
 void Bully::heartbeatLoop() {
@@ -139,9 +150,12 @@ void Bully::heartbeatLoop() {
 void Bully::checkForLeaderFailure() {
     while (running_ && myId_ != leaderId_) {
         // Esta é uma implementação simplificada. Uma real usaria um timer que é resetado ao receber um heartbeat.
-        std::cout << "[BULLY] Server " << myId_ << " hasn't received a heartbeat from leader " << leaderId_ << ". Starting election.\n";
-        startElection();
-        std::this_thread::sleep_for(std::chrono::seconds(3)); // Timeout de 2 segundos
+        if(!leaderAlive_){
+            std::cout << "[BULLY] Server " << myId_ << " hasn't received a heartbeat from leader " << leaderId_ << ". Starting election.\n";
+            startElection();            
+        }
+        leaderAlive_ = false;
+        std::this_thread::sleep_for(std::chrono::seconds(4)); // Timeout de 2 segundos
     }
 }
 
