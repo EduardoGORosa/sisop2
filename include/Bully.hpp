@@ -4,6 +4,7 @@
 #include <map>
 #include <thread>
 #include <atomic>
+#include <condition_variable>
 #include "Connection.hpp"
 
 struct ServerInfo {
@@ -17,6 +18,12 @@ class Bully {
 public:
     int myId_;
     int leaderId_;
+    
+    // heartbeat
+    std::atomic<bool>  leaderAlive_;
+    std::condition_variable heartbeatCv_;
+    std::mutex heartbeatMtx_;
+    std::chrono::milliseconds heartbeatTimeout_{5000};
 
     Bully(int myId, std::map<int, ServerInfo> servers, Server* serverInstance);
     void start();

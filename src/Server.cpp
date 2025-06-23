@@ -26,8 +26,7 @@ Server::Server(const std::string& ip,
     port_(port),
     fm_(root),
     storageRoot_(root),
-    myId_(myId),    
-    isLeader_(false)
+    myId_(myId)
 {
     bully_ = std::make_unique<Bully>(myId, allServers_, this);
 }
@@ -75,7 +74,7 @@ void Server::run() {
 }
 
 void Server::becomeLeader() {
-    isLeader_ = true;
+    bully_->leaderId_ = myId_;    
     std::cout << "[SERVER] I am the new leader!\n";
     connectToClient("127.0.0.1", reconnect_port_);
     forceReconnect("127.0.0.1", this->port_);
@@ -126,15 +125,29 @@ void Server::acceptLoop() {
     while (true) {
         sockaddr_in cli; socklen_t len = sizeof(cli);
         int fd = accept(listenFd_, (sockaddr*)&cli, &len);
-        std::thread(&Server::handleClient, this, fd).detach();
+        if (fd < 0) continue;
+
+        Connection conn(fd);
+        Packet p;
+        if (!conn.recvPacket(p)) {
+            std::cout << "[server] Erro na mensagem\n";
+            close(fd);
+            continue;
+        }
+        handleMessage(fd, p, conn);
     }
 }
 
-void Server::handleServerMessage(int fd) {
-    Connection conn(fd);
-    Packet p;
-    // Tenta receber um pacote. Se não conseguir em um certo tempo, assume que é um cliente.
-    // Uma implementação robusta teria um handshake.
+void Server::handleMessage(int fd, Packet p, Connection conn){
+    if( p.type == CMD_REGISTER ){  // handshake do cliente
+        std::thread(&Server::handleClient, this, fd, p, conn).detach();
+    }
+    else{   
+        std::thread(&Server::handleServerMessage, this, fd, p, conn).detach();
+    }
+}
+
+void Server::handleServerMessage(int fd, Packet p, Connection conn) {
     if (conn.recvPacket(p)) {
         char ip_str[INET_ADDRSTRLEN];
         sockaddr_in peer_addr;
@@ -144,26 +157,20 @@ void Server::handleServerMessage(int fd) {
 
         bully_->handleElectionMessage(p, ip_str, ntohs(peer_addr.sin_port));
         close(fd);
-    } else {
+    }
+     else {
         // Assume que é um cliente se não enviar um pacote de eleição rapidamente
-        handleClient(fd);
+        std::cout << "[SERVER] Erro ao tentar receber pacote de outro servidor. \n";
     }
 }
 
-void Server::handleClient(int fd) {
-    Connection conn(fd);
-    Packet     p;
-
-    if (bully_->leaderId_ != this->myId_) {
-        std::cout << "[SERVER] I am a backup. Refusing client connection.\n";
-        close(fd);
-        return;
-    }
-
+void Server::handleClient(int fd, Packet p, Connection conn) {    
+    std::cout << "[SERVER] Teste 1 \n";
     if (!conn.recvPacket(p) || p.type != CMD_REGISTER) {
         close(fd);
         return;
     }
+    std::cout << "[SERVER] Teste 2 \n";
     std::string user(p.payload.begin(), p.payload.end());
     {
         std::lock_guard lk(clMtx_);
@@ -201,8 +208,9 @@ void Server::handleClient(int fd) {
         up.length = up.payload.size();
         conn.sendPacket(up);
     }
-
+    std::cout << "[SERVER] Teste 3 \n";
     while (conn.recvPacket(p)) {
+        std::cout << "[SERVER] Recebeu mensagem do cliente tipo "<<p.type<<" \n";
         if (p.type == CMD_EXIT) {
             {
                 std::lock_guard lk(clMtx_);
@@ -288,6 +296,13 @@ void Server::handleClient(int fd) {
                 sp.length = sp.payload.size();
                 conn.sendPacket(sp);
             }
+        }
+        else if(p.type == HEARTBEAT){
+            std::cout << "[SERVER] Recebeu mensagem do HEARTBEAT. \n";
+            if (bully_->leaderId_ != this->myId_) {
+                bully_->leaderAlive_ = true;                
+            }
+
         }
     }
 }

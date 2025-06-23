@@ -10,7 +10,8 @@ Bully::Bully(int myId, std::map<int, ServerInfo> servers, Server* serverInstance
       leaderId_(-1),
       electionInProgress_(false),
       running_(false),
-      server_(serverInstance) {
+      server_(serverInstance),
+      leaderAlive_(true) {
     // Inicialmente, o líder é o servidor com o maior ID
     leaderId_ = servers_.rbegin()->first;
 }
@@ -87,6 +88,7 @@ void Bully::startElection() {
 }
 
 void Bully::handleElectionMessage(const Packet& p, const std::string& senderIp, uint16_t senderPort) {
+    std::cout << "[BULLY] Encontrou uma mensagem do tipo " << p.type << " \n";
     if (p.type == ELECTION) {
         int senderId = -1;
         // Descobrir o ID do remetente
@@ -123,6 +125,7 @@ void Bully::handleElectionMessage(const Packet& p, const std::string& senderIp, 
         }
 
     } else if (p.type == HEARTBEAT) {
+        std::cout << "[BULLY] Entrou nesta condicional. \n";
         // Resetar o timer de falha do líder (implementado em checkForLeaderFailure)
     }
 }
@@ -132,16 +135,22 @@ void Bully::heartbeatLoop() {
         std::cout << "[BULLY] Leader " << myId_ << " sending heartbeats.\n";
         Packet heartbeatPkt{HEARTBEAT, 0, {}};
         broadcast(heartbeatPkt);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 }
 
 void Bully::checkForLeaderFailure() {
     while (running_ && myId_ != leaderId_) {
         // Esta é uma implementação simplificada. Uma real usaria um timer que é resetado ao receber um heartbeat.
-        std::cout << "[BULLY] Server " << myId_ << " hasn't received a heartbeat from leader " << leaderId_ << ". Starting election.\n";
-        startElection();
-        std::this_thread::sleep_for(std::chrono::seconds(3)); // Timeout de 2 segundos
+        if(leaderAlive_){
+            std::cout << "[BULLY] Leader is still alive. \n";
+            leaderAlive_ = false;
+        }
+        else{
+            std::cout << "[BULLY] Server " << myId_ << " hasn't received a heartbeat from leader " << leaderId_ << ". Starting election.\n";
+            startElection();
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(5)); 
     }
 }
 

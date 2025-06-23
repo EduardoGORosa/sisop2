@@ -18,7 +18,8 @@ enum PacketType : uint16_t {
     HEARTBEAT       = 100,
     ELECTION        = 101,
     ANSWER          = 102,
-    COORDINATOR     = 103
+    COORDINATOR     = 103,
+    BACKUP          = 104
 };
 
 struct Packet {
