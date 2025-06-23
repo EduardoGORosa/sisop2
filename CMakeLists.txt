@@ -26,7 +26,15 @@ add_executable(client
     src/FileManager.cpp
 )
 
+add_executable(frontend
+    src/main_frontend.cpp
+    src/Frontend.cpp
+    src/Connection.cpp
+    src/Packet.cpp
+)
+
 # link de threads
 target_link_libraries(server pthread)
 target_link_libraries(client pthread)
+target_link_libraries(frontend pthread)
 

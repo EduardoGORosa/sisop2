@@ -5,17 +5,24 @@ Para compilar:
 
 Para rodar server:
   (Dentro do dir build)
-  ./server [ip] [porta]
+  ./server [id] [ip] [porta] [storage_root]
 
 Para rodar cliente:
   (Dentro do dir build)
   ./client [user] [ip] [porta]
 
+Para rodar frontend:
+  (Dentro do dir build)
+  ./frontend [ip] [porta]
+
 
 Exemplo:
 
 Server
-../../dropbox/build/server 127.0.0.1 12345
+./server 30 127.0.0.1 8003 ./storage_30
 
 Client
-../../dropbox/build/client username 127.0.0.1 12345
+./client john 127.0.0.1 9000
+
+Frontend
+./frontend 127.0.0.1 9000
