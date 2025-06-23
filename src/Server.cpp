@@ -99,8 +99,8 @@ void Server::becomeLeader() {
     
     // Only try to connect to client if we're not in a test environment
     try {
-        connectToClient("127.0.0.1", reconnect_port_);
-        forceReconnect("127.0.0.1", this->port_);
+        connectToClient("10.67.103.33", reconnect_port_);
+        forceReconnect("10.67.103.33", this->port_);
     } catch (...) {
         // Silently handle client connection failures
         std::cout << "[SERVER] Client reconnection not available (normal in test mode)\n";
@@ -227,7 +227,7 @@ void Server::handleServerMessage(int fd) {
             break; // Close connection after handling election message
         } else if (p.type == BACKUP_OPERATION) {
             // Handle backup operation from primary
-            handleBackupOperation(p, "127.0.0.1", 0);
+            handleBackupOperation(p, "10.67.103.35", 0);
             break; // Close connection after handling backup operation
         } else if (p.type == BACKUP_ACK) {
             // Handle acknowledgment from backup

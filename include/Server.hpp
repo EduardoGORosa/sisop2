@@ -77,9 +77,9 @@ private:
     std::unique_ptr<Bully> bully_;
     int myId_;
     std::map<int, ServerInfo> allServers_ = {
-        {10, {"127.0.0.1", 8001}},
-        {20, {"127.0.0.1", 8002}},
-        {30, {"127.0.0.1", 8003}}
+        {10, {"10.67.103.36", 8001}},
+        {20, {"10.67.103.35", 8002}},
+        {30, {"10.67.103.33", 8003}}
     };
     std::atomic<bool> isLeader_;
 

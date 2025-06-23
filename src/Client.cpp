@@ -236,7 +236,7 @@ void Client::userLoop() {
             if (!(iss >> new_port)) {
                 std::cout << "Usage: reconnect <port>\n";
             } else {
-                connectToServer("127.0.0.1", new_port);                
+                connectToServer("10.67.103.33", new_port);                
             }
         }
         else if (!cmd.empty()) {
